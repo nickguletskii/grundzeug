@@ -57,7 +57,7 @@ class ContainerFactoryContainerRegistration(ContainerRegistration):
     def __call__(self, container: IContainer) -> Any:
         if not self._registered:
             self._registered = True
-            self._value = self.factory()
+            self._value = self.container.inject_func(self.factory)()
         return self._value
 
 
@@ -76,7 +76,7 @@ class TransientFactoryContainerRegistration(ContainerRegistration):
         self.factory = factory
 
     def __call__(self, container: IContainer) -> Any:
-        return self.factory()
+        return container.inject_func(self.factory)()
 
 
 class HierarchicalFactoryContainerRegistration(ContainerRegistration):
@@ -98,7 +98,7 @@ class HierarchicalFactoryContainerRegistration(ContainerRegistration):
 
     def __call__(self, container: IContainer) -> Any:
         if not container in self._values:
-            self._values[container] = self.factory()
+            self._values[container] = container.inject_func(self.factory)()
         return self._values[container]
 
 

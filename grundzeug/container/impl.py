@@ -311,7 +311,7 @@ class Container(IContainer):
 
         self._register_factory(
             contract=contract,
-            factory=self._type_factory(clazz),
+            factory=clazz,
             bean_name=bean_name,
             registration_type=registration_type
         )
@@ -368,9 +368,6 @@ class Container(IContainer):
     @property
     def resolve(self) -> IContainerResolveIndexer:
         return self._resolve_indexer
-
-    def _type_factory(self, clazz: type):
-        return self.inject_func(clazz)
 
     def inject_func(self, func: FuncT) -> FuncT:
         from grundzeug.container.di import inject_func
