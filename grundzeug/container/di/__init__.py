@@ -16,6 +16,7 @@ import warnings
 
 from grundzeug.container.di.common import *
 from grundzeug.container.di.injection import *
+from grundzeug.container.di.aliases import *
 
 import grundzeug.container.di.default
 

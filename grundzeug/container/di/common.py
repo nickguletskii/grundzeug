@@ -12,15 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import functools
 import inspect
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, TypeVar, Generic
-
-from typing_extensions import Annotated
+from typing import Dict, Any, Optional, List, TypeVar
 
 from grundzeug.container.interface import IContainer, ContractT
-from grundzeug.container.contracts import convert_contract_to_type
 
 
 class TypeIntrospector(ABC):
@@ -73,11 +69,6 @@ class InjectAnnotation:
 
 
 ContractVarT = TypeVar("ContractVarT")
-
-
-class Inject():
-    def __class_getitem__(self, contract: ContractT) -> Annotated:
-        return Annotated[convert_contract_to_type(contract), InjectAnnotation[contract]]
 
 
 class InjectIndexer:
