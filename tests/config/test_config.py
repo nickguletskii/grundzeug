@@ -8,10 +8,12 @@ from typing_extensions import Annotated
 from grundzeug.config import configuration, Configurable, inject_config, MissingConfigurationKeysException
 from grundzeug.config.providers.argparse import ArgParseConfigurationProvider
 from grundzeug.config.providers.common import DictTreeConfigurationProvider, ConfigurationProvider
+from grundzeug.container import InstanceContainerRegistration
 from grundzeug.container.impl import Container
 from grundzeug.container.di import Inject, inject, inject_func
-from grundzeug.container.plugins.ContainerConfigurationResolutionPlugin import ContainerConfigurationResolutionPlugin, \
-    BeanList
+from grundzeug.container.plugins import BeanList
+from grundzeug.container.plugins.ContainerConfigurationResolutionPlugin import ContainerConfigurationResolutionPlugin
+from grundzeug.container.utils import lookup_container_plugin_by_type
 
 
 @configuration(["foo", "bar"])
@@ -62,6 +64,15 @@ class TestConfig:
         )
         return container
 
+    def test_full_container_configuration_providers(self, full_container):
+        configuration_plugin = lookup_container_plugin_by_type(full_container, ContainerConfigurationResolutionPlugin)
+
+        registrations = list(configuration_plugin.registrations(full_container))
+        assert len(registrations) == 1
+        registration_key, registration = registrations[0]
+        assert registration_key == BeanList[ConfigurationProvider]
+        assert isinstance(registration, InstanceContainerRegistration)
+
     @pytest.fixture()
     def full_container_child(self, full_container):
         full_container_child = Container(full_container)
@@ -75,6 +86,24 @@ class TestConfig:
             })
         )
         return full_container_child
+
+    def test_full_container_child_configuration_providers(self, full_container_child):
+        configuration_plugin = lookup_container_plugin_by_type(full_container_child,
+                                                               ContainerConfigurationResolutionPlugin)
+
+        parent_registrations = list(configuration_plugin.registrations(full_container_child.parent))
+        assert len(parent_registrations) == 1
+        parent_registration_key, parent_registration = parent_registrations[0]
+        assert parent_registration_key == BeanList[ConfigurationProvider]
+        assert isinstance(parent_registration, InstanceContainerRegistration)
+
+        child_registrations = list(configuration_plugin.registrations(full_container_child))
+        assert len(child_registrations) == 1
+        child_registration_key, child_registration = child_registrations[0]
+        assert child_registration_key == BeanList[ConfigurationProvider]
+        assert isinstance(child_registration, InstanceContainerRegistration)
+
+        assert parent_registration != child_registration
 
     @pytest.fixture()
     def container_lacks_required_key(self):

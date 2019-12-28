@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import typing
 from typing import Any, Union, TypeVar, Generic
 
 from grundzeug.container.interface import ContainerResolutionPlugin, RegistrationKey, ContainerRegistration, IContainer, \
@@ -21,7 +21,7 @@ from grundzeug.container.contracts import register_contract_to_type_converter
 T = TypeVar("T")
 
 
-class BeanList(Generic[T], tuple):
+class BeanList(Generic[T], tuple, typing.Iterable[T], typing.Sized):
     pass
 
 
@@ -88,8 +88,8 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
         if key in registry:
             local_state = local_state + \
                           [
-                              x(container)
-                              for x
+                              registration(container)
+                              for registration
                               in registry[key]
                           ]
         return ContinueMessage(local_state)
@@ -106,3 +106,12 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
         return ReturnMessage(
             BeanList(local_state)
         )
+
+    def registrations(
+            self,
+            container: IContainer
+    ) -> typing.Iterable[typing.Tuple[RegistrationKey, ContainerRegistration]]:
+        registry = container.get_plugin_storage(self)
+        for registration_key, registrations in registry.items():
+            for registration in registrations:
+                yield registration_key, registration

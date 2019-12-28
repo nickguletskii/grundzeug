@@ -7,7 +7,6 @@ import pytest
 
 from grundzeug.container.impl import Container
 from grundzeug.container.di import injectable, inject, Inject
-from grundzeug.container.plugins.ContainerBeanListResolutionPlugin import BeanList
 from grundzeug.container.registrations import TransientFactoryContainerRegistration, \
     HierarchicalFactoryContainerRegistration
 
@@ -65,35 +64,11 @@ def injectable_func_field(
     return arg, kwarg, bean
 
 
-def injectable_func_type_list(
-        arg: int,
-        kwarg: str,
-        bean: Inject[BeanList[IBean]]
-) -> Tuple[int, str, BeanList[IBean]]:
-    return arg, kwarg, bean
-
-
-def injectable_func_field_list(
-        arg: int,
-        kwarg: str,
-        bean: BeanList[IBean] = inject[BeanList[IBean]]()
-) -> Tuple[int, str, BeanList[IBean]]:
-    return arg, kwarg, bean
-
-
 injectable_func_parametrize = pytest.mark.parametrize(
     "func",
     [
         injectable_func_type,
         injectable_func_field
-    ],
-)
-
-injectable_func_parametrize_list = pytest.mark.parametrize(
-    "func",
-    [
-        injectable_func_type_list,
-        injectable_func_field_list
     ],
 )
 
@@ -201,19 +176,6 @@ class TestDI:
         assert second_bean.kwarg == "baz"
         assert isinstance(second_bean.bean, Bean)
         assert second_bean.bean.foo == "bar"
-
-    @injectable_func_parametrize_list
-    def test_bean_list_injection(self, func):
-        container = Container()
-        container.register_factory[BeanList[IBean]](lambda: Bean())
-        container.register_factory[BeanList[IBean]](lambda: Bean2())
-
-        x, y, z = container.inject_func(func)(42, kwarg="baz")
-        assert x == 42
-        assert y == "baz"
-        assert isinstance(z, BeanList)
-        assert len(z) == 2
-        assert {v.foo for v in z} == {"bar", "baz"}
 
     @injectable_func_parametrize
     def test_func_instance_injection_finalizer_called(self, func):

@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import typing
 from typing import Any, Union
 
 from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, ContainerResolutionPlugin, \
@@ -61,3 +61,10 @@ class ContainerSingleValueResolutionPlugin(ContainerResolutionPlugin):
             container: IContainer
     ) -> Any:
         return NotFoundMessage(None)
+
+    def registrations(
+            self,
+            container: IContainer
+    ) -> typing.Iterable[typing.Tuple[RegistrationKey, ContainerRegistration]]:
+        registry = container.get_plugin_storage(self)
+        return registry.items()

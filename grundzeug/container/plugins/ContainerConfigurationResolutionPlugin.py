@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 import inspect
+import typing
 from dataclasses import dataclass
 from typing import Any, Union, TypeVar, Generic, Set, Tuple, Dict, Generator
 
@@ -200,3 +201,12 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
                 f"Could not resolve configuration class {key.bean_contract}: the following configuration keys "
                 f"are missing: {', '.join((str(x) for x in missing_values))}."
             )
+
+    def registrations(
+            self,
+            container: IContainer
+    ) -> typing.Iterable[typing.Tuple[RegistrationKey, ContainerRegistration]]:
+        registry = container.get_plugin_storage(self)
+        if ConfigurationProvider in registry:
+            for registration in registry[ConfigurationProvider]:
+                yield BeanList[ConfigurationProvider], registration

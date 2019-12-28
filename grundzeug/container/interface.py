@@ -556,6 +556,18 @@ class ContainerResolutionPlugin(ABC):
         """
         raise NotImplementedError()
 
+    @abstractmethod
+    def registrations(
+            self,
+            container: "IContainer"
+    ) -> typing.Iterable[typing.Tuple[RegistrationKey, ContainerRegistration]]:
+        """
+        :param: The container to get the registrations for.
+        :return: An iterable of pairs, where the first element is a registration key, and the second element is a \
+                 container registration.
+        """
+        raise NotImplementedError()
+
 
 @set_module("grundzeug.container")
 class Injector:
