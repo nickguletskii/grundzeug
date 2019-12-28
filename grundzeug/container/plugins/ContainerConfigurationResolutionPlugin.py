@@ -22,12 +22,9 @@ from grundzeug.config.common import Configurable, MISSING
 from grundzeug.config.providers.common import ConfigurationProvider
 from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, ContainerResolutionPlugin, \
     IContainer, RegistrationKey, ContainerRegistration
+from grundzeug.container.plugins import BeanList
 
 T = TypeVar("T")
-
-
-class BeanList(Generic[T], tuple):
-    pass
 
 
 @dataclass
