@@ -12,21 +12,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import multiprocessing
 import typing
-from ctypes import c_int64
-from typing import Any, Optional, Callable, Tuple, List, TypeVar, Type, Union, overload
-from weakref import WeakKeyDictionary
-from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, \
-    ContainerResolutionPlugin, FuncT, IContainer, IContainerRegisterInstanceIndexer, \
-    IContainerResolveIndexer, IContainerRegisterFactoryIndexer, IContainerRegisterTypeIndexer, BeanType, \
-    GetBeanProtocol, RegisterInstanceProtocol, RegisterFactoryProtocol, RegistrationKey, ContainerRegistration, \
-    ContractT, RegisterTypeProtocol, Injector
+import uuid
+from typing import Any, Optional, Callable, Tuple, TypeVar, Type, Union, overload
+from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from grundzeug.container.exceptions import ResolutionFailedError
+from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, \
+    ContainerResolutionPlugin, FuncT, IContainer, IContainerRegisterInstanceIndexer, \
+    IContainerResolveIndexer, IContainerRegisterFactoryIndexer, IContainerRegisterTypeIndexer, GetBeanProtocol, \
+    RegisterInstanceProtocol, RegisterFactoryProtocol, RegistrationKey, ContainerRegistration, \
+    ContractT, RegisterTypeProtocol, Injector
 from grundzeug.container.registrations import InstanceContainerRegistration, \
-    ContainerFactoryContainerRegistration, TransientFactoryContainerRegistration, \
-    HierarchicalFactoryContainerRegistration
+    ContainerFactoryContainerRegistration
 from grundzeug.util.docs import set_module
 
 BeanT = TypeVar("BeanT")
@@ -199,7 +197,12 @@ class ContainerInjector(Injector):
 class Container(IContainer):
     def __init__(self, parent: Optional["Container"] = None):
         super().__init__()
+        self.__uuid = uuid.uuid4()
+        self.__children = WeakValueDictionary()
+
         self._parent = parent
+        if parent is not None:
+            parent._register_child(self)
 
         self._register_instance_indexer = ContainerRegisterInstanceIndexer(self)
         self._register_factory_indexer = ContainerRegisterFactoryIndexer(self)
@@ -219,6 +222,17 @@ class Container(IContainer):
             self._plugins = []
 
         self._plugin_storage = WeakKeyDictionary()
+
+    @property
+    def uuid(self):
+        return self.__uuid
+
+    @property
+    def children(self) -> typing.List["IContainer"]:
+        return list(self.__children.values())
+
+    def _register_child(self, container: IContainer):
+        self.__children[container.uuid] = container
 
     def add_plugin(self, plugin: ContainerResolutionPlugin) -> IContainer:
         if self._parent is not None:

@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 import typing
+import uuid
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import Optional, Type, TypeVar, Any, Union
@@ -592,6 +593,20 @@ class Injector:
 
 @set_module("grundzeug.container")
 class IContainer(Injector):
+    @property
+    @abstractmethod
+    def uuid(self) -> uuid.UUID:
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def children(self) -> typing.List["IContainer"]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _register_child(self, container: "IContainer"):
+        raise NotImplementedError()
+
     @abstractmethod
     def add_plugin(self, plugin: ContainerResolutionPlugin) -> "IContainer":
         """
