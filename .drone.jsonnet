@@ -1,6 +1,6 @@
 local PipelineTesting(python_version) = {
   kind: "pipeline",
-  name: "testing",
+  name: "testing-python-" + python_version,
   type: "docker",
   platform: {
     os: "linux",
