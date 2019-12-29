@@ -33,7 +33,7 @@ mkdocs==1.0.4
 mkdocs-material==4.4.3
 mkdocs-minify-plugin==0.2.1
 more-itertools==7.2.0
-mypy==0.750+dev.3d680e0f3783b8af2ef931826858229078a0dac4
+mypy==0.761
 mypy-extensions==0.4.3
 numpy==1.17.4
 packaging==19.2
