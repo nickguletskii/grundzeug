@@ -1,7 +1,7 @@
 ---
 kind: pipeline
 type: docker
-name: testing-python-3.7
+name: master/testing-python-3.7
 
 platform:
   os: linux
@@ -18,13 +18,32 @@ steps:
 trigger:
   branch:
   - master
+
+---
+kind: pipeline
+type: docker
+name: pull_request/testing-python-3.7
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: test
+  pull: always
+  image: python:3.7
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - pytest --cov=grundzeug tests
+
+trigger:
   event:
   - pull_request
 
 ---
 kind: pipeline
 type: docker
-name: testing-python-3.8
+name: master/testing-python-3.8
 
 platform:
   os: linux
@@ -41,6 +60,25 @@ steps:
 trigger:
   branch:
   - master
+
+---
+kind: pipeline
+type: docker
+name: pull_request/testing-python-3.8
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: test
+  pull: always
+  image: python:3.8
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - pytest --cov=grundzeug tests
+
+trigger:
   event:
   - pull_request
 
