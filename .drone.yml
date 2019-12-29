@@ -1,0 +1,47 @@
+---
+kind: pipeline
+type: docker
+name: testing
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: test
+  pull: always
+  image: python:3.7
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - pytest --cov=grundzeug tests
+
+trigger:
+  branch:
+  - master
+  event:
+  - pull_request
+
+---
+kind: pipeline
+type: docker
+name: testing
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: test
+  pull: always
+  image: python:3.8
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - pytest --cov=grundzeug tests
+
+trigger:
+  branch:
+  - master
+  event:
+  - pull_request
+
+...
