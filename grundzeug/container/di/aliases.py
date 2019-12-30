@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Tuple
 
 from typing_extensions import Annotated
 
@@ -23,3 +23,9 @@ from grundzeug.container.di import InjectAnnotation
 class Inject():
     def __class_getitem__(self, contract: ContractT) -> Annotated:
         return Annotated[convert_contract_to_type(contract), InjectAnnotation[contract]]
+
+
+class InjectNamed():
+    def __class_getitem__(self, contract_and_name: Tuple[ContractT, str]) -> Annotated:
+        contract, name = contract_and_name
+        return Annotated[convert_contract_to_type(contract), InjectAnnotation(contract, name)]
