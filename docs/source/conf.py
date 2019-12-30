@@ -57,6 +57,8 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 
+html_logo = "_static/logo_inverted.svg"
+
 # -- Options for autodoc -----------------------------------------------------
 autoclass_content = 'both'
 
@@ -66,3 +68,6 @@ autodoc_default_options = {
     'undoc-members': True,
     'exclude-members': '__weakref__,__dict__,__init__'
 }
+
+def setup(app):
+    app.add_css_file("custom.css")

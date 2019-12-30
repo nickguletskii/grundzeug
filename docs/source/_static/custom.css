@@ -1,0 +1,24 @@
+.wy-side-nav-search {
+    background-color: #152224;
+}
+
+.wy-side-nav-search > .icon-home {
+    display:flex;
+    flex-direction: column-reverse;
+}
+.wy-side-nav-search > .icon-home::before {
+    content: "";
+}
+.wy-side-nav-search > a#text {
+    content: "";
+}
+.wy-side-nav-search > a.icon img.logo {
+    margin-top: 0em;
+}
+.wy-side-nav-search > .icon-home {
+    font-size: 1.333rem;
+}
+
+.wy-side-scroll {
+    background-color: #263d42;
+}
