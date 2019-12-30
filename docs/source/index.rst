@@ -6,6 +6,7 @@ Welcome to grundzeug's documentation!
     :hidden:
 
     install
+    tutorials/index
     api/index
 
 Indices and tables
