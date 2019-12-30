@@ -169,6 +169,8 @@ def configuration(path: ConfigPathT):
     """
     A decorator that marks the class as a configuration class.
 
+    Adds a method called `asdict`, which converts configuration class instances into dictionaries.
+
     :param path: The configuration path (key) prefix for all Configurables in this class.
     """
 
@@ -190,6 +192,17 @@ def configuration(path: ConfigPathT):
         _cls.__grundzeug_configuration__ = ConfigurationClassMetadata(
             path=tuple(path)
         )
+
+        def _asdict(self):
+            res = {}
+            for t in reversed(inspect.getmro(type(self))):
+                for k, v in t.__dict__.items():
+                    if not isinstance(v, Configurable):
+                        continue
+                    res[k] = getattr(self, k)
+            return res
+
+        _cls.asdict = _asdict
         return _cls
 
     return _configurationclass
