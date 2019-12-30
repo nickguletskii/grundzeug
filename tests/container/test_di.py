@@ -1,12 +1,12 @@
 import gc
 import weakref
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional
+from typing import Tuple
 
 import pytest
 
+from grundzeug.container.di import injectable, inject, Inject, InjectNamed
 from grundzeug.container.impl import Container
-from grundzeug.container.di import injectable, inject, Inject
 from grundzeug.container.registrations import TransientFactoryContainerRegistration, \
     HierarchicalFactoryContainerRegistration
 
@@ -19,9 +19,22 @@ class IBean(ABC):
 
 
 class Bean(IBean):
+    def __init__(self, name: str):
+        self.name = name
+
     @property
     def foo(self):
-        return "bar"
+        return f"bar_{self.name}"
+
+
+class UnnamedBean(Bean):
+    def __init__(self):
+        super().__init__("unnamed_bean")
+
+
+class NamedBean(Bean):
+    def __init__(self):
+        super().__init__("named_bean")
 
 
 class Bean2(IBean):
@@ -32,7 +45,8 @@ class Bean2(IBean):
 
 @injectable
 class SecondBeanType:
-    bean: Inject[IBean]
+    unnamed_bean: Inject[IBean]
+    named_bean: InjectNamed[IBean, "named_bean"]
 
     def __init__(self, arg: int, kwarg: str):
         self.kwarg = kwarg
@@ -41,7 +55,8 @@ class SecondBeanType:
 
 @injectable
 class SecondBeanField:
-    bean: IBean = inject[IBean]
+    unnamed_bean: IBean = inject[IBean]
+    named_bean: IBean = inject[IBean].named("named_bean")
 
     def __init__(self, arg: int, kwarg: str):
         self.kwarg = kwarg
@@ -51,17 +66,19 @@ class SecondBeanField:
 def injectable_func_type(
         arg: int,
         kwarg: str,
-        bean: Inject[IBean]
-) -> Tuple[int, str, IBean]:
-    return arg, kwarg, bean
+        bean: Inject[IBean],
+        named_bean: InjectNamed[IBean, "named_bean"]
+) -> Tuple[int, str, IBean, IBean]:
+    return arg, kwarg, bean, named_bean
 
 
 def injectable_func_field(
         arg: int,
         kwarg: str,
-        bean: IBean = inject[IBean]()
-) -> Tuple[int, str, IBean]:
-    return arg, kwarg, bean
+        bean: IBean = inject[IBean](),
+        named_bean: IBean = inject[IBean](bean_name="named_bean")
+) -> Tuple[int, str, IBean, IBean]:
+    return arg, kwarg, bean, named_bean
 
 
 injectable_func_parametrize = pytest.mark.parametrize(
@@ -77,89 +94,125 @@ class TestDI:
     @injectable_func_parametrize
     def test_func_instance_injection(self, func):
         container = Container()
-        bean = Bean()
+        bean = Bean("unnamed_bean")
         container.register_instance[IBean](bean)
-        x, y, z = container.inject_func(func)(42, kwarg="baz")
+        named_bean = Bean("named_bean")
+        container.register_instance[IBean](named_bean, bean_name="named_bean")
+        x, y, unnamed_bean_received, named_bean_received = container.inject_func(func)(42, kwarg="baz")
         assert x == 42
         assert y == "baz"
-        assert z == bean
-        assert z.foo == "bar"
+        assert unnamed_bean_received == bean
+        assert unnamed_bean_received.foo == "bar_unnamed_bean"
+        assert named_bean_received == named_bean
+        assert named_bean_received.foo == "bar_named_bean"
 
     @injectable_func_parametrize
     def test_func_factory_injection(self, func):
         container = Container()
-        container.register_factory[IBean](lambda: Bean())
-        x, y, z = container.inject_func(func)(42, kwarg="baz")
+        container.register_factory[IBean](lambda: Bean("unnamed_bean"))
+        container.register_factory[IBean](lambda: Bean("named_bean"), bean_name="named_bean")
+        x, y, unnamed_bean_received, named_bean_received = container.inject_func(func)(42, kwarg="baz")
         assert x == 42
         assert y == "baz"
-        assert isinstance(z, Bean)
-        assert z.foo == "bar"
+        assert isinstance(unnamed_bean_received, Bean)
+        assert unnamed_bean_received.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received, Bean)
+        assert named_bean_received.foo == "bar_named_bean"
 
     @injectable_func_parametrize
     def test_func_type_injection(self, func):
         container = Container()
-        container.register_type[IBean, Bean]()
-        x, y, z = container.inject_func(func)(42, kwarg="baz")
+        container.register_type[IBean, UnnamedBean]()
+        container.register_type[IBean, NamedBean](bean_name="named_bean")
+        x, y, unnamed_bean_received, named_bean_received = container.inject_func(func)(42, kwarg="baz")
         assert x == 42
         assert y == "baz"
-        assert isinstance(z, Bean)
-        assert z.foo == "bar"
+        assert isinstance(unnamed_bean_received, Bean)
+        assert unnamed_bean_received.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received, Bean)
+        assert named_bean_received.foo == "bar_named_bean"
 
     @injectable_func_parametrize
     def test_func_factory_injection_transient(self, func):
         container = Container()
         container.register_factory[IBean](
-            lambda: Bean(),
+            lambda: Bean("unnamed_bean"),
             registration_type=TransientFactoryContainerRegistration
         )
-        x1, y1, z1 = container.inject_func(func)(42, kwarg="baz")
-        x2, y2, z2 = container.inject_func(func)(42, kwarg="baz")
+        container.register_factory[IBean](
+            lambda: Bean("named_bean"),
+            bean_name="named_bean",
+            registration_type=TransientFactoryContainerRegistration
+        )
+        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject_func(func)(42, kwarg="baz")
+        x2, y2, unnamed_bean_received2, named_bean_received2 = container.inject_func(func)(42, kwarg="baz")
         assert x1 == 42
         assert y1 == "baz"
-        assert isinstance(z1, Bean)
-        assert z1.foo == "bar"
+        assert isinstance(unnamed_bean_received1, Bean)
+        assert unnamed_bean_received1.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received1, Bean)
+        assert named_bean_received1.foo == "bar_named_bean"
         assert x2 == 42
         assert y2 == "baz"
-        assert isinstance(z2, Bean)
-        assert z2.foo == "bar"
-        assert z1 != z2
+        assert isinstance(unnamed_bean_received2, Bean)
+        assert unnamed_bean_received2.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received2, Bean)
+        assert named_bean_received2.foo == "bar_named_bean"
+        assert unnamed_bean_received1 != unnamed_bean_received2
+        assert named_bean_received1 != named_bean_received2
 
     @injectable_func_parametrize
     def test_func_factory_injection_container_controlled(self, func):
         container = Container()
-        container.register_factory[IBean](lambda: Bean())
+        container.register_factory[IBean](lambda: Bean("unnamed_bean"))
+        container.register_factory[IBean](lambda: Bean("named_bean"), bean_name="named_bean")
         child_container = Container(container)
-        x1, y1, z1 = container.inject_func(func)(42, kwarg="baz")
-        x2, y2, z2 = child_container.inject_func(func)(42, kwarg="baz")
+        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject_func(func)(42, kwarg="baz")
+        x2, y2, unnamed_bean_received2, named_bean_received2 = child_container.inject_func(func)(42, kwarg="baz")
         assert x1 == 42
         assert y1 == "baz"
-        assert isinstance(z1, Bean)
-        assert z1.foo == "bar"
+        assert isinstance(unnamed_bean_received1, Bean)
+        assert unnamed_bean_received1.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received1, Bean)
+        assert named_bean_received1.foo == "bar_named_bean"
         assert x2 == 42
         assert y2 == "baz"
-        assert isinstance(z2, Bean)
-        assert z2.foo == "bar"
-        assert z1 == z2
+        assert isinstance(unnamed_bean_received2, Bean)
+        assert unnamed_bean_received2.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received2, Bean)
+        assert named_bean_received2.foo == "bar_named_bean"
+        assert unnamed_bean_received1 == unnamed_bean_received2
+        assert named_bean_received1 == named_bean_received2
 
     @injectable_func_parametrize
     def test_func_factory_injection_hierarchical(self, func):
         container = Container()
         container.register_factory[IBean](
-            lambda: Bean(),
+            lambda: Bean("unnamed_bean"),
+            registration_type=HierarchicalFactoryContainerRegistration
+        )
+        container.register_factory[IBean](
+            lambda: Bean("named_bean"),
+            bean_name="named_bean",
             registration_type=HierarchicalFactoryContainerRegistration
         )
         child_container = Container(container)
-        x1, y1, z1 = container.inject_func(func)(42, kwarg="baz")
-        x2, y2, z2 = child_container.inject_func(func)(42, kwarg="baz")
+        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject_func(func)(42, kwarg="baz")
+        x2, y2, unnamed_bean_received2, named_bean_received2 = child_container.inject_func(func)(42, kwarg="baz")
         assert x1 == 42
         assert y1 == "baz"
-        assert isinstance(z1, Bean)
-        assert z1.foo == "bar"
+        assert isinstance(unnamed_bean_received1, Bean)
+        assert unnamed_bean_received1.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received1, Bean)
+        assert named_bean_received1.foo == "bar_named_bean"
         assert x2 == 42
         assert y2 == "baz"
-        assert isinstance(z2, Bean)
-        assert z2.foo == "bar"
-        assert z1 != z2
+        assert isinstance(unnamed_bean_received2, Bean)
+        assert unnamed_bean_received2.foo == "bar_unnamed_bean"
+        assert isinstance(named_bean_received2, Bean)
+        assert named_bean_received2.foo == "bar_named_bean"
+        assert unnamed_bean_received1 != unnamed_bean_received2
+        assert named_bean_received1 != named_bean_received2
 
     @pytest.mark.parametrize(
         "clazz",
@@ -170,12 +223,15 @@ class TestDI:
     )
     def test_field_injection(self, clazz):
         container = Container()
-        container.register_factory[IBean](lambda: Bean())
+        container.register_factory[IBean](lambda: Bean("unnamed_bean"))
+        container.register_factory[IBean](lambda: Bean("named_bean"), bean_name="named_bean")
         second_bean = container.inject_func(clazz)(42, kwarg="baz")
         assert second_bean.arg == 42
         assert second_bean.kwarg == "baz"
-        assert isinstance(second_bean.bean, Bean)
-        assert second_bean.bean.foo == "bar"
+        assert isinstance(second_bean.unnamed_bean, Bean)
+        assert second_bean.unnamed_bean.foo == "bar_unnamed_bean"
+        assert isinstance(second_bean.named_bean, Bean)
+        assert second_bean.named_bean.foo == "bar_named_bean"
 
     @injectable_func_parametrize
     def test_func_instance_injection_finalizer_called(self, func):
@@ -205,6 +261,7 @@ class TestDI:
         weakref.finalize(container2, mark_container2_removed)
 
         container2.register_instance[IBean](bean)
+        container2.register_instance[IBean](bean, bean_name="named_bean")
         container2.inject_func(func)(42, kwarg="baz")
 
         assert bean_removed == False
