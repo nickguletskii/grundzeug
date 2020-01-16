@@ -51,7 +51,8 @@ class ContainerSingleValueResolutionPlugin(ContainerResolutionPlugin):
         registry = ancestor_container.get_plugin_storage(self)
 
         if key in registry:
-            return ReturnMessage(registry[key](container))
+            registration = registry[key]
+            return ReturnMessage(registration(container), is_cacheable=registration.is_cacheable)
         return NotFoundMessage(None)
 
     def resolve_bean_postprocess(

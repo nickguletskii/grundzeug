@@ -69,6 +69,14 @@ class ContainerRegistration(ABC):
         """
         raise NotImplementedError()
 
+    @property
+    @abstractmethod
+    def is_cacheable(self):
+        """
+        :return: True if the beans returned by this registration instance may be reused.
+        """
+        raise NotImplementedError()
+
 
 @set_module("grundzeug.container")
 class GetBeanProtocol(typing_extensions.Protocol):
@@ -415,6 +423,11 @@ class ReturnMessage:
     value: Any
     """
     The value (bean) to return.
+    """
+
+    is_cacheable: bool
+    """
+    Set to true to allow container implementations to cache this bean.
     """
 
 

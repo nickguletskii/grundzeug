@@ -36,6 +36,10 @@ class InstanceContainerRegistration(ContainerRegistration):
     def __call__(self, container: IContainer) -> Any:
         return self.instance
 
+    @property
+    def is_cacheable(self):
+        return True
+
 
 class ContainerFactoryContainerRegistration(ContainerRegistration):
     """
@@ -60,6 +64,10 @@ class ContainerFactoryContainerRegistration(ContainerRegistration):
             self._value = self.container.inject_func(self.factory)()
         return self._value
 
+    @property
+    def is_cacheable(self):
+        return True
+
 
 class TransientFactoryContainerRegistration(ContainerRegistration):
     """
@@ -77,6 +85,10 @@ class TransientFactoryContainerRegistration(ContainerRegistration):
 
     def __call__(self, container: IContainer) -> Any:
         return container.inject_func(self.factory)()
+
+    @property
+    def is_cacheable(self):
+        return False
 
 
 class HierarchicalFactoryContainerRegistration(ContainerRegistration):
@@ -100,6 +112,10 @@ class HierarchicalFactoryContainerRegistration(ContainerRegistration):
         if not container in self._values:
             self._values[container] = container.inject_func(self.factory)()
         return self._values[container]
+
+    @property
+    def is_cacheable(self):
+        return True
 
 
 class RegistrationTypes(Enum):

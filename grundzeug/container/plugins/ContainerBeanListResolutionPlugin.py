@@ -71,7 +71,7 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
             key: RegistrationKey,
             container: IContainer
     ) -> Any:
-        return []
+        return ([], True)
 
     def resolve_bean_reduce(
             self,
@@ -83,16 +83,22 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
         if not self.applies_to(key.bean_contract):
             return NotFoundMessage(local_state)
 
+        beans, is_cacheable = local_state
+
         registry = ancestor_container.get_plugin_storage(self)
+        registrations = registry[key]
+
+        if is_cacheable:
+            is_cacheable = all(registration.is_cacheable for registration in registrations)
 
         if key in registry:
-            local_state = local_state + \
-                          [
-                              registration(container)
-                              for registration
-                              in registry[key]
-                          ]
-        return ContinueMessage(local_state)
+            beans = beans + \
+                    [
+                        registration(container)
+                        for registration
+                        in registrations
+                    ]
+        return ContinueMessage((beans, is_cacheable))
 
     def resolve_bean_postprocess(
             self,
@@ -100,11 +106,13 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
             local_state: Any,
             container: IContainer
     ) -> Union[ReturnMessage, NotFoundMessage]:
+        beans, is_cacheable = local_state
         if not self.applies_to(key.bean_contract):
             return NotFoundMessage(local_state)
 
         return ReturnMessage(
-            BeanList(local_state)
+            BeanList(beans),
+            is_cacheable=is_cacheable
         )
 
     def registrations(

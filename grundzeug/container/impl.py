@@ -199,6 +199,7 @@ class Container(IContainer):
         super().__init__()
         self.__uuid = uuid.uuid4()
         self.__children = WeakValueDictionary()
+        self.__cache = {}
 
         self._parent = parent
         if parent is not None:
@@ -222,6 +223,13 @@ class Container(IContainer):
             self._plugins = []
 
         self._plugin_storage = WeakKeyDictionary()
+
+    def __cache_delete(self, key):
+        if key in self.__cache:
+            del self.__cache[key]
+
+    def __cache_put(self, key, value):
+        self.__cache[key] = value
 
     @property
     def uuid(self):
@@ -263,6 +271,7 @@ class Container(IContainer):
                     registration=registration,
                     container=self
             ):
+                self.__cache_delete(key=key)
                 return
 
     def _register_instance(
@@ -345,6 +354,9 @@ class Container(IContainer):
 
         key = RegistrationKey(contract, bean_name)
 
+        if key in self.__cache:
+            return self.__cache[key]
+
         plugins = list(self.plugins)
         states = [
             plugin.resolve_bean_create_initial_state(key, self)
@@ -358,6 +370,8 @@ class Container(IContainer):
                 res = plugin.resolve_bean_reduce(key, states[i], self, current_container)
 
                 if isinstance(res, ReturnMessage):
+                    if res.is_cacheable:
+                        self.__cache_put(contract, res.value)
                     return res.value
                 elif isinstance(res, NotFoundMessage):
                     states[i] = res.state
@@ -372,6 +386,8 @@ class Container(IContainer):
         for i, plugin in enumerate(self.plugins):
             res = plugin.resolve_bean_postprocess(key, states[i], self)
             if isinstance(res, ReturnMessage):
+                if res.is_cacheable:
+                    self.__cache_put(contract, res.value)
                 return res.value
             elif isinstance(res, NotFoundMessage):
                 pass

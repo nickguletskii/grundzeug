@@ -131,11 +131,11 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
         if len(local_state.values_left_to_collect) == 0:
             if is_configuration_class(key.bean_contract):
                 bean = self._construct_configuration_class(key, local_state, container)
-                return ReturnMessage(bean)
+                return ReturnMessage(bean, is_cacheable=True)
             else:
                 configurable: Configurable = key.bean_contract
                 configurable.validate(local_state.collected_values[tuple(configurable.full_path)], container)
-                return ReturnMessage(local_state.collected_values[tuple(configurable.full_path)])
+                return ReturnMessage(local_state.collected_values[tuple(configurable.full_path)], is_cacheable=True)
         return ContinueMessage(local_state)
 
     def resolve_bean_postprocess(
@@ -150,7 +150,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
         if is_configuration_class(key.bean_contract):
             self._assert_no_missing_configuration_keys(key, local_state)
             bean = self._construct_configuration_class(key, local_state, container)
-            return ReturnMessage(bean)
+            return ReturnMessage(bean, is_cacheable=True)
         else:
             configurable: Configurable = key.bean_contract
             if configurable.default == MISSING:
@@ -160,7 +160,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
                     f"satisfying config key {configurable.full_path}."
                 )
             configurable.validate(configurable.default, container)
-            return ReturnMessage(configurable.default)
+            return ReturnMessage(configurable.default, is_cacheable=True)
 
     def _construct_configuration_class(
             self,
