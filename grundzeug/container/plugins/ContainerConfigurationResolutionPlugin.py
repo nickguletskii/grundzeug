@@ -22,8 +22,9 @@ from grundzeug.config import CanonicalConfigPathT, MissingConfigurationKeysExcep
 from grundzeug.config.common import Configurable, MISSING
 from grundzeug.config.providers.common import ConfigurationProvider
 from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, ContainerResolutionPlugin, \
-    IContainer, RegistrationKey, ContainerRegistration
+    IContainer, RegistrationKey, ContainerRegistration, BEAN_NOT_FOUND
 from grundzeug.container.plugins import BeanList
+from grundzeug.converters.common import Converter
 
 T = TypeVar("T")
 
@@ -134,8 +135,10 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
                 return ReturnMessage(bean, is_cacheable=True)
             else:
                 configurable: Configurable = key.bean_contract
-                configurable.validate(local_state.collected_values[tuple(configurable.full_path)], container)
-                return ReturnMessage(local_state.collected_values[tuple(configurable.full_path)], is_cacheable=True)
+                value = local_state.collected_values[tuple(configurable.full_path)]
+                value = self._transform(value, configurable, container)
+                configurable.validate(value, container)
+                return ReturnMessage(value, is_cacheable=True)
         return ContinueMessage(local_state)
 
     def resolve_bean_postprocess(
@@ -173,6 +176,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
             full_path = tuple(c.full_path)
             if full_path in local_state.collected_values:
                 value = local_state.collected_values[full_path]
+                value = self._transform(value, c, container)
             elif c.default != MISSING:
                 value = c.default
             else:
@@ -182,6 +186,12 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
 
             setattr(bean, k, value)
         return bean
+
+    def _transform(self, value, configurable: Configurable, container: IContainer):
+        converter = container.try_resolve[Converter[type(value), configurable.clazz]]()
+        if converter is BEAN_NOT_FOUND:
+            converter = Converter[type(value), configurable.clazz].identity()
+        return converter(value)
 
     def _assert_no_missing_configuration_keys(
             self,

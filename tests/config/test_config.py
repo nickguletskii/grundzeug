@@ -13,7 +13,9 @@ from grundzeug.container.impl import Container
 from grundzeug.container.di import Inject, inject, inject_func
 from grundzeug.container.plugins import BeanList
 from grundzeug.container.plugins.ContainerConfigurationResolutionPlugin import ContainerConfigurationResolutionPlugin
+from grundzeug.container.plugins.ContainerConverterResolutionPlugin import ContainerConverterResolutionPlugin
 from grundzeug.container.utils import lookup_container_plugin_by_type
+from grundzeug.converters import Converter
 
 
 @configuration(["foo", "bar"])
@@ -52,16 +54,18 @@ class TestConfig:
     def full_container(self):
         container = Container()
         container.add_plugin(ContainerConfigurationResolutionPlugin())
+        container.add_plugin(ContainerConverterResolutionPlugin())
         container.register_instance[BeanList[ConfigurationProvider]](
             DictTreeConfigurationProvider({
                 "foo": {
                     "bar": {
-                        "baz": 42,
-                        "boo": 32
+                        "baz": "42",
+                        "boo": "32"
                     }
                 }
             })
         )
+        container.register_instance[Converter[str, int]](Converter[str, int].cast())
         return container
 
     def test_full_container_configuration_providers(self, full_container):
@@ -80,7 +84,7 @@ class TestConfig:
             DictTreeConfigurationProvider({
                 "foo": {
                     "bar": {
-                        "baz": 62
+                        "baz": "62"
                     }
                 }
             })
@@ -109,15 +113,17 @@ class TestConfig:
     def container_lacks_required_key(self):
         container = Container()
         container.add_plugin(ContainerConfigurationResolutionPlugin())
+        container.add_plugin(ContainerConverterResolutionPlugin())
         container.register_instance[BeanList[ConfigurationProvider]](
             DictTreeConfigurationProvider({
                 "foo": {
                     "bar": {
-                        "boo": 32
+                        "boo": "32"
                     }
                 }
             })
         )
+        container.register_instance[Converter[str, int]](Converter[str, int].cast())
         return container
 
     @pytest.fixture()
@@ -128,11 +134,12 @@ class TestConfig:
             DictTreeConfigurationProvider({
                 "foo": {
                     "bar": {
-                        "baz": 42
+                        "baz": "42"
                     }
                 }
             })
         )
+        container.register_instance[Converter[str, int]](Converter[str, int].cast())
         return container
 
     @injectable_func_parametrize
