@@ -11,8 +11,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+from itertools import zip_longest
 from typing import Dict, TypeVar
+
+from grundzeug.util.sentinels import make_sentinel
 
 DictKeyT = TypeVar("DictKeyT")
 DictValueT = TypeVar("DictValueT")
@@ -20,3 +22,16 @@ DictValueT = TypeVar("DictValueT")
 
 def dictionary_union(*dictionaries: Dict[DictKeyT, DictValueT]) -> Dict[DictKeyT, DictValueT]:
     return dict(item for dictionary in dictionaries for item in dictionary.items())
+
+
+_SENTINEL = make_sentinel()
+
+
+def zip_equal(*p):
+    for i, tup in enumerate(zip_longest(*p, fillvalue=_SENTINEL)):
+        tup: tuple = tup
+        if _SENTINEL in tup:
+            pos = tup.index(_SENTINEL)
+            raise ValueError(f"Iterable {pos} only had {i} elements, but the other iterables are longer! Please ensure "
+                             f"that all iterables have the same length.")
+        yield tup
