@@ -11,13 +11,17 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from typing import Any
+
 import pytest
 
 from grundzeug.container import Container, RegistrationKey
 from grundzeug.container.di import Inject, inject
 from grundzeug.container.plugins import BeanList, Tuple, ContainerConfigurationResolutionPlugin, \
     ContainerBeanListResolutionPlugin
+from grundzeug.container.plugins.ContainerConverterResolutionPlugin import ContainerConverterResolutionPlugin
 from grundzeug.container.utils import lookup_container_plugin_by_type
+from grundzeug.converters import Converter
 from tests.container.test_di import IBean
 
 
@@ -82,3 +86,21 @@ class TestContainerResolutionPlugins:
         assert len(registrations) == 2
         for registration_key, registration in registrations:
             assert isinstance(registration_key, RegistrationKey)
+
+    def test_converter_resolution(self):
+        container = Container()
+        container.add_plugin(ContainerConverterResolutionPlugin())
+
+        def _assert_false(x):
+            assert False
+
+        container.register_instance[Converter[Any, Any]](_assert_false)
+        container.register_instance[Converter[Any, int]](_assert_false)
+        container.register_instance[Converter[str, object]](Converter[str, object].identity())
+        container.register_instance[Converter[str, int]](lambda x: int(x))
+
+        str_to_int = container.resolve[Converter[str, int]]()
+        assert str_to_int("3") == 3
+
+        str_to_obj = container.resolve[Converter[str, object]]()
+        assert str_to_obj("3") == "3"
