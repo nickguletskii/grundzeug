@@ -126,7 +126,7 @@ def is_callable(type_def, allow_callable_class: bool = False) -> bool:
     return False
 
 
-def can_substitute(to_check, type_def) -> bool:
+def can_substitute(to_check, type_def, assume_cant_substitute=False) -> bool:
     """
     Checks whether ``to_check`` can substitute ``type_def`` according to the Liskov Substitution Principle.
 
@@ -167,8 +167,7 @@ def can_substitute(to_check, type_def) -> bool:
     19. If ``to_check`` is a :py:class:`~typing.TypeVar` with bound ``S``, return ``True`` iff \
         ``can_substitute(S, type_def)``.
     20. If ``to_check`` is a :py:class:`~typing.TypeVar`, return ``True`` iff ``to_check is type_def``.
-    21. If ``to_check`` is a class or has an attribute called ``__subclasshook__``, return \
-        ``issubclass(to_check, type_def)``.
+    21. If ``to_check`` is a class , return ``issubclass(to_check, type_def)``.
     22. Raise :py:class:`~ValueError`.
 
     A type definition is determined to be a callable if calling :py:func:`~is_callable` with \
@@ -182,14 +181,16 @@ def can_substitute(to_check, type_def) -> bool:
 
     :param to_check: the type that should be able to substitute ``type_def`` if this function returns ``True``.
     :param type_def: the type that should be substitutable by ``to_check`` if this function returns ``True``.
+    :param assume_cant_substitute: if ``True``, this function will return ``False`` instead of throwing a \
+                                   ``ValueError`` for arguments which can't be compared.
     :return: ``True`` if ``to_check`` can substitute ``type_def``, ``False`` otherwise.
-    :raises ValueError: if the arguments are not supported.
+    :raises ValueError: if the arguments are not supported and ``assume_cant_substitute`` is ``False``.
     :raises NotImplementedError: if ``type_def`` is a covariant or a contravariant :py:class:`~typing.TypeVar`.
     """
-    return _can_substitute_impl(to_check, type_def, False)
+    return _can_substitute_impl(to_check, type_def, False, assume_cant_substitute)
 
 
-def is_weak_overload_of(to_check, type_def):
+def is_weak_overload_of(to_check, type_def, assume_cant_substitute=False):
     """
     Checks whether ``to_check`` is at least as specific as ``type_def``.
 
@@ -205,13 +206,16 @@ def is_weak_overload_of(to_check, type_def):
 
     :param to_check: the type that should be at least as specific as ``type_def`` if this function returns ``True``.
     :param type_def: the type that should be at most as specific as ``to_check`` if this function returns ``True``.
-    :return: ``True`` if ``to_check`` is at least as specific as ``type_def``, ``False`` otherwise.
+    :param assume_cant_substitute: if ``True``, this function will return ``False`` instead of throwing a \
+                                   ``ValueError`` for arguments which can't be compared.
+    :return: ``True`` if ``to_check`` is at least as specific as ``type_def``, ``False`` otherwise.herwise.
+    :raises ValueError: if the arguments are not supported and ``assume_cant_substitute`` is ``False``.
     """
 
-    return _can_substitute_impl(to_check, type_def, True)
+    return _can_substitute_impl(to_check, type_def, True, assume_cant_substitute)
 
 
-def _can_substitute_impl(to_check, type_def, check_is_weak_overload_of):
+def _can_substitute_impl(to_check, type_def, check_is_weak_overload_of, assume_cant_substitute):
     if is_none_type(type_def):
         return is_none_type(to_check)
 
@@ -227,7 +231,7 @@ def _can_substitute_impl(to_check, type_def, check_is_weak_overload_of):
         if len(type_def.__constraints__) > 0:
             return any(to_check == x for x in type_def.__constraints__)
         if type_def.__bound__ is not None:
-            return _can_substitute_impl(to_check, type_def.__bound__, check_is_weak_overload_of)
+            return _can_substitute_impl(to_check, type_def.__bound__, check_is_weak_overload_of, assume_cant_substitute)
         return True
 
     if isinstance(type_def, _GenericAlias):
@@ -265,7 +269,8 @@ def _can_substitute_impl(to_check, type_def, check_is_weak_overload_of):
         elif to_check.__origin__ == typing.Callable or to_check.__origin__ == collections.abc.Callable:
             return _check_callable_signature(to_check, type_def, check_is_weak_overload_of)
         elif hasattr(type_def, "__parameters__"):
-            return _can_substitute_impl(to_check, type_def[type_def.__parameters__], check_is_weak_overload_of)
+            return _can_substitute_impl(to_check, type_def[type_def.__parameters__], check_is_weak_overload_of,
+                                        assume_cant_substitute)
         # The type def is not a generic alias, so it may be a non-generic version of the class
         return can_substitute(to_check.__origin__, type_def)
 
@@ -276,13 +281,20 @@ def _can_substitute_impl(to_check, type_def, check_is_weak_overload_of):
         if to_check.__covariant__ or to_check.__contravariant__:
             raise NotImplementedError(f"TypeVar covariance and contravariance is currently not supported.")
         if len(to_check.__constraints__) > 0:
-            return all(_can_substitute_impl(x, type_def, check_is_weak_overload_of) for x in to_check.__constraints__)
+            return all(
+                _can_substitute_impl(x, type_def, check_is_weak_overload_of, assume_cant_substitute)
+                for x
+                in to_check.__constraints__
+            )
         if to_check.__bound__ is not None:
-            return _can_substitute_impl(to_check.__bound__, type_def, check_is_weak_overload_of)
+            return _can_substitute_impl(to_check.__bound__, type_def, check_is_weak_overload_of, assume_cant_substitute)
         return to_check is type_def
 
-    if inspect.isclass(to_check) or hasattr(to_check, "__subclasshook__"):
+    if inspect.isclass(to_check):
         return issubclass(to_check, type_def)
+
+    if assume_cant_substitute:
+        return False
 
     raise ValueError(f"Unsupported arguments: {to_check}, {type_def}")
 

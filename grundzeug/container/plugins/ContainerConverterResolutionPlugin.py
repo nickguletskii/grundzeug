@@ -35,7 +35,7 @@ class ContainerConverterResolutionPlugin(ContainerAmbiguousResolutionPluginBase)
     def is_registration_key_supported(self, registration_key: RegistrationKey):
         if registration_key.bean_name is not None:
             return False
-        return can_substitute(registration_key.bean_contract, Converter)
+        return can_substitute(registration_key.bean_contract, Converter, assume_cant_substitute=True)
 
     def is_registration_compatible_with_requested_key(
             self,

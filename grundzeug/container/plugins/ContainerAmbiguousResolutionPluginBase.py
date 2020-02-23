@@ -106,6 +106,9 @@ class ContainerAmbiguousResolutionPluginBase(ContainerResolutionPlugin, ABC):
             container: IContainer,
             ancestor_container: IContainer
     ) -> Union[ReturnMessage, ContinueMessage, NotFoundMessage]:
+        if not self.is_registration_key_supported(key):
+            return NotFoundMessage(local_state)
+
         registry = ancestor_container.get_plugin_storage(self)
         for k, value in registry.items():
             if k in local_state:
