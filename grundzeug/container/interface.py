@@ -21,11 +21,15 @@ from typing import Optional, Type, TypeVar, Any, Union
 import typing_extensions
 
 from grundzeug.util.docs import set_module
+from grundzeug.util.sentinels import make_sentinel
 
 BeanT = TypeVar("BeanT")
 BeanType = Any
 FuncT = TypeVar("FuncT")
 ContractT = Any
+
+
+BEAN_NOT_FOUND_TYPE, BEAN_NOT_FOUND = make_sentinel()
 
 
 @set_module("grundzeug.container")
@@ -759,6 +763,23 @@ class IContainer(Injector):
                                     bean.
 
         :return: A helper class that implements the syntax described above.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def try_resolve_bean(
+            self,
+            contract: ContractT,
+            bean_name: Optional[str] = None
+    ) -> Union[BeanT, BEAN_NOT_FOUND_TYPE]:
+        """
+        Resolves a bean that is registered with this container or one of the ancestors.
+
+        :param contract: The contract to resolve.
+        :param bean_name: An optional name to resolve named beans.
+        :return: The requested bean or :py:data:`~grundzeug.container.interface.BEAN_NOT_FOUND`, or \
+                 :py:data:`~grundzeug.container.interface.BEAN_NOT_FOUND`.
+        :raises Exception: Other exceptions may be thrown when calling the user's factories and constructors.
         """
         raise NotImplementedError()
 

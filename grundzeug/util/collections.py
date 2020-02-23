@@ -24,7 +24,7 @@ def dictionary_union(*dictionaries: Dict[DictKeyT, DictValueT]) -> Dict[DictKeyT
     return dict(item for dictionary in dictionaries for item in dictionary.items())
 
 
-_SENTINEL = make_sentinel()
+_, _SENTINEL = make_sentinel()
 
 
 def zip_equal(*p):

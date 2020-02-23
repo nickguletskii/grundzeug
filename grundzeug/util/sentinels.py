@@ -16,4 +16,4 @@ def make_sentinel():
     class _Sentinel():
         pass
 
-    return _Sentinel()
+    return _Sentinel, _Sentinel()

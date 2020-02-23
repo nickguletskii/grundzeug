@@ -22,7 +22,7 @@ from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFou
     ContainerResolutionPlugin, FuncT, IContainer, IContainerRegisterInstanceIndexer, \
     IContainerResolveIndexer, IContainerRegisterFactoryIndexer, IContainerRegisterTypeIndexer, GetBeanProtocol, \
     RegisterInstanceProtocol, RegisterFactoryProtocol, RegistrationKey, ContainerRegistration, \
-    ContractT, RegisterTypeProtocol, Injector
+    ContractT, RegisterTypeProtocol, Injector, BEAN_NOT_FOUND, BEAN_NOT_FOUND_TYPE
 from grundzeug.container.registrations import InstanceContainerRegistration, \
     ContainerFactoryContainerRegistration
 from grundzeug.util.docs import set_module
@@ -32,12 +32,12 @@ BeanT = TypeVar("BeanT")
 
 @set_module("grundzeug.container")
 class ContainerResolveIndexer(IContainerResolveIndexer):
-    def __init__(self, container: "Container"):
-        self._container = container
+    def __init__(self, func: Callable[[ContractT, str], BeanT]):
+        self._func = func
 
     def __getitem__(self, contract: ContractT) -> GetBeanProtocol:
         def __getbean(bean_name: Optional[str] = None):
-            return self._container.resolve_bean(contract=contract, bean_name=bean_name)
+            return self._func(contract, bean_name)
 
         return __getbean
 
@@ -208,7 +208,8 @@ class Container(IContainer):
         self._register_instance_indexer = ContainerRegisterInstanceIndexer(self)
         self._register_factory_indexer = ContainerRegisterFactoryIndexer(self)
         self._register_type_indexer = ContainerRegisterTypeIndexer(self)
-        self._resolve_indexer = ContainerResolveIndexer(self)
+        self._resolve_indexer = ContainerResolveIndexer(self.resolve_bean)
+        self._try_resolve_indexer = ContainerResolveIndexer(self.try_resolve_bean)
 
         from grundzeug.container.plugins import \
             ContainerBeanListResolutionPlugin, \
@@ -344,11 +345,11 @@ class Container(IContainer):
     def register_type(self) -> IContainerRegisterTypeIndexer:
         return self._register_type_indexer
 
-    def resolve_bean(
+    def try_resolve_bean(
             self,
             contract: ContractT,
             bean_name: Optional[str] = None
-    ) -> BeanT:
+    ) -> Union[BeanT, BEAN_NOT_FOUND_TYPE]:
         if bean_name is None and contract == Container:
             return self
 
@@ -393,11 +394,25 @@ class Container(IContainer):
                 pass
             else:
                 raise NotImplementedError()
-        raise ResolutionFailedError()
+        return BEAN_NOT_FOUND
+
+    def resolve_bean(
+            self,
+            contract: ContractT,
+            bean_name: Optional[str] = None
+    ) -> BeanT:
+        bean = self.try_resolve_bean(contract=contract, bean_name=bean_name)
+        if bean is BEAN_NOT_FOUND:
+            raise ResolutionFailedError()
+        return bean
 
     @property
     def resolve(self) -> IContainerResolveIndexer:
         return self._resolve_indexer
+
+    @property
+    def try_resolve(self) -> IContainerResolveIndexer:
+        return self._try_resolve_indexer
 
     def inject_func(self, func: FuncT) -> FuncT:
         from grundzeug.container.di import inject_func

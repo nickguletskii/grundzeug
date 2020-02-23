@@ -111,7 +111,7 @@ def generic_aware(cls=None, *, process_default_classmethod: bool = True):
     return wrap(cls)
 
 
-_generic_class_override_sentinel = make_sentinel()
+_, _generic_class_override_sentinel = make_sentinel()
 
 
 class generic_accessor():
