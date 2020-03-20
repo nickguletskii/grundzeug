@@ -45,4 +45,7 @@ class DefaultTypeIntrospector(TypeIntrospector):
             if isinstance(v.default, InjectAnnotation)
         }
 
+
 register_type_introspector(DefaultTypeIntrospector())
+
+__all__ = ["DefaultTypeIntrospector"]

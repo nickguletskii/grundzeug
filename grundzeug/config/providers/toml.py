@@ -25,3 +25,6 @@ class TOMLConfigurationProvider(
     ):
         import toml
         super().__init__(toml.loads(toml_string))
+
+
+__all__ = ["TOMLConfigurationProvider"]

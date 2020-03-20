@@ -12,10 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import inspect
 import typing
 from dataclasses import dataclass
-from typing import Any, Union, TypeVar, Generic, Set, Tuple, Dict, Generator
+from typing import Any, Union, TypeVar, Set, Tuple, Dict, Generator
 
 from grundzeug.config import CanonicalConfigPathT, MissingConfigurationKeysException, \
     is_configuration_class
@@ -219,3 +218,6 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
         if ConfigurationProvider in registry:
             for registration in registry[ConfigurationProvider]:
                 yield BeanList[ConfigurationProvider], registration
+
+
+__all__ = ["ContainerConfigurationResolutionPlugin"]

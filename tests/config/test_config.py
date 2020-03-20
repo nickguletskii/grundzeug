@@ -1,19 +1,15 @@
-import inspect
-from argparse import ArgumentParser
-from typing import Tuple, List
+from typing import Tuple
 
 import pytest
-from typing_extensions import Annotated
 
 from grundzeug.config import configuration, Configurable, inject_config, MissingConfigurationKeysException
-from grundzeug.config.providers.argparse import ArgParseConfigurationProvider
 from grundzeug.config.providers.common import DictTreeConfigurationProvider, ConfigurationProvider
-from grundzeug.container import InstanceContainerRegistration
+from grundzeug.container.di import Inject, inject_func
 from grundzeug.container.impl import Container
-from grundzeug.container.di import Inject, inject, inject_func
 from grundzeug.container.plugins import BeanList
 from grundzeug.container.plugins.ContainerConfigurationResolutionPlugin import ContainerConfigurationResolutionPlugin
 from grundzeug.container.plugins.ContainerConverterResolutionPlugin import ContainerConverterResolutionPlugin
+from grundzeug.container.registrations import InstanceContainerRegistration
 from grundzeug.container.utils import lookup_container_plugin_by_type
 from grundzeug.converters import Converter
 

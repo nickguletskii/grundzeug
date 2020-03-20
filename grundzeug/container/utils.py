@@ -11,7 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from grundzeug.container import IContainer, ContainerResolutionPlugin, Type
+from typing import Type
+
+from grundzeug.container import IContainer, ContainerResolutionPlugin
 
 
 def lookup_container_plugin_by_type(container: IContainer, plugin_type: Type[ContainerResolutionPlugin]):
@@ -21,3 +23,6 @@ def lookup_container_plugin_by_type(container: IContainer, plugin_type: Type[Con
         in container.plugins
         if isinstance(plugin, plugin_type)
     )
+
+
+__all__ = ["lookup_container_plugin_by_type"]

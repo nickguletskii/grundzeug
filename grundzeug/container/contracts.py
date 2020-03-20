@@ -47,3 +47,6 @@ def convert_contract_to_type(contract: ContractT) -> Union[type, _GenericAlias, 
         if res is not None:
             return res
     return typing.Any
+
+
+__all__ = ["register_contract_to_type_converter", "convert_contract_to_type"]

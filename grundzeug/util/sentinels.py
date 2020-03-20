@@ -17,3 +17,6 @@ def make_sentinel():
         pass
 
     return _Sentinel, _Sentinel()
+
+
+__all__ = ["make_sentinel"]

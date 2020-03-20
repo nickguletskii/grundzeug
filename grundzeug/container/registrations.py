@@ -141,3 +141,7 @@ class RegistrationTypes(Enum):
     """
     Returns the same instance each time the bean is being resolved.
     """
+
+
+__all__ = ["InstanceContainerRegistration", "ContainerFactoryContainerRegistration",
+           "TransientFactoryContainerRegistration", "HierarchicalFactoryContainerRegistration", "RegistrationTypes"]

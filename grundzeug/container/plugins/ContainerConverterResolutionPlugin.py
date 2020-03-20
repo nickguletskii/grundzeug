@@ -85,3 +85,6 @@ class ContainerConverterResolutionPlugin(ContainerAmbiguousResolutionPluginBase)
             raise Exception("Ambiguous resolution!")
         else:
             return candidates[result[0]]
+
+
+__all__ = ["ContainerConverterResolutionPlugin"]

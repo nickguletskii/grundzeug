@@ -60,3 +60,6 @@ class ArgParseConfigurationProvider(ConfigurationProvider):
         if joined_path in self._dict:
             return self._dict[joined_path]
         return MISSING
+
+
+__all__ = ["ArgParseConfigurationProvider"]

@@ -19,3 +19,5 @@ from grundzeug.container import ContractT
 
 Inject = Union
 InjectNamed = Annotated
+
+__all__ = ["Inject", "InjectNamed"]

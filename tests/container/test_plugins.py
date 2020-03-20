@@ -11,14 +11,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Any
+from typing import Any, Tuple
 
 import pytest
 
 from grundzeug.container import Container, RegistrationKey
 from grundzeug.container.di import Inject, inject
-from grundzeug.container.plugins import BeanList, Tuple, ContainerConfigurationResolutionPlugin, \
-    ContainerBeanListResolutionPlugin
+from grundzeug.container.plugins import BeanList, ContainerBeanListResolutionPlugin
 from grundzeug.container.plugins.ContainerConverterResolutionPlugin import ContainerConverterResolutionPlugin
 from grundzeug.container.utils import lookup_container_plugin_by_type
 from grundzeug.converters import Converter

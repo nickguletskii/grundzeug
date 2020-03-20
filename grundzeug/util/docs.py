@@ -18,3 +18,6 @@ def set_module(module_name: str):
         return func
 
     return _set_module
+
+
+__all__ = ["set_module"]

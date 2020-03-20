@@ -140,3 +140,6 @@ class ContainerAmbiguousResolutionPluginBase(ContainerResolutionPlugin, ABC):
     ) -> typing.Iterable[typing.Tuple[RegistrationKey, ContainerRegistration]]:
         registry = container.get_plugin_storage(self)
         return registry.items()
+
+
+__all__ = ["ContainerAmbiguousResolutionPluginBase"]

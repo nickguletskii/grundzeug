@@ -124,3 +124,6 @@ class DictTreeConfigurationProvider(ConfigurationProvider):
                 return MISSING
             cur = cur[x]
         return cur
+
+
+__all__ = ["ConfigurationProvider", "TextParserConfigurationProviderMixin", "DictTreeConfigurationProvider"]

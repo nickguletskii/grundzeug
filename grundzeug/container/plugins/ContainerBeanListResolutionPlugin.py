@@ -16,7 +16,6 @@ from typing import Any, Union, TypeVar, Generic
 
 from grundzeug.container.interface import ContainerResolutionPlugin, RegistrationKey, ContainerRegistration, IContainer, \
     ReturnMessage, ContinueMessage, NotFoundMessage, ContractT
-from grundzeug.container.contracts import register_contract_to_type_converter
 
 T = TypeVar("T")
 
@@ -123,3 +122,6 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
         for registration_key, registrations in registry.items():
             for registration in registrations:
                 yield registration_key, registration
+
+
+__all__ = ["BeanList", "ContainerBeanListResolutionPlugin"]

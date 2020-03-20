@@ -28,3 +28,6 @@ class ResolutionFailedError(Exception):
     the requested bean.
     """
     pass
+
+
+__all__ = ["ContainerAlreadyHasRegistrationError", "ResolutionFailedError"]

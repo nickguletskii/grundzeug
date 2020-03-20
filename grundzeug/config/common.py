@@ -237,3 +237,8 @@ def is_configuration_class(clazz: type) -> bool:
              otherwise.
     """
     return hasattr(clazz, "__grundzeug_configuration__")
+
+
+__all__ = ["ConfigT", "CanonicalConfigPathT", "ConfigPathT", "ContractVarT", "CONFIGURATION_METADATA_KEY", "MISSING",
+           "ConfigurationValidationException", "MissingConfigurationKeysException", "Configurable",
+           "ConfigurationClassMetadata", "configuration", "inject_config", "is_configuration_class"]

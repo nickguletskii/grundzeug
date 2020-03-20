@@ -25,3 +25,6 @@ class JSONConfigurationProvider(
     ):
         import json
         super().__init__(json.loads(toml_string))
+
+
+__all__ = ["JSONConfigurationProvider"]

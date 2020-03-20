@@ -63,3 +63,5 @@ class AnnotatedTypeIntrospector(TypeIntrospector):
 
 
 register_type_introspector(AnnotatedTypeIntrospector())
+
+__all__ = ["AnnotatedTypeIntrospector"]

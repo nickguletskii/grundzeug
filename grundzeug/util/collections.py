@@ -35,3 +35,6 @@ def zip_equal(*p):
             raise ValueError(f"Iterable {pos} only had {i} elements, but the other iterables are longer! Please ensure "
                              f"that all iterables have the same length.")
         yield tup
+
+
+__all__ = ["dictionary_union", "zip_equal"]

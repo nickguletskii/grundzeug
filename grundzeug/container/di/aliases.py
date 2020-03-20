@@ -29,3 +29,6 @@ class InjectNamed():
     def __class_getitem__(self, contract_and_name: Tuple[ContractT, str]) -> Annotated:
         contract, name = contract_and_name
         return Annotated[convert_contract_to_type(contract), InjectAnnotation(contract, name)]
+
+
+__all__ = ["Inject", "InjectNamed"]

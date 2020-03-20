@@ -14,9 +14,9 @@
 import pytest
 
 from grundzeug.config import configuration, Configurable
-from grundzeug.config.providers.common import DictTreeConfigurationProvider
+from grundzeug.config.providers.common import DictTreeConfigurationProvider, ConfigurationProvider
 from grundzeug.container import Container
-from grundzeug.container.plugins import ContainerConfigurationResolutionPlugin, ConfigurationProvider, BeanList
+from grundzeug.container.plugins import ContainerConfigurationResolutionPlugin, BeanList
 
 
 @configuration(["foo", "bar"])
