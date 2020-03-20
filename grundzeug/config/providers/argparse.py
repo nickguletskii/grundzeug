@@ -32,30 +32,28 @@ class ArgParseConfigurationProvider(ConfigurationProvider):
 
     def register_arguments(self, argument_parser: ArgumentParser):
         for config_type in self._managed_configurations:
-            for t in reversed(inspect.getmro(config_type)):
-                for k, v in t.__dict__.items():
-                    if not isinstance(v, Configurable):
-                        continue
-                    full_path_joined = ".".join(v.full_path)
-                    argument_parser.add_argument(
-                        f"--{self.prefix}{full_path_joined}",
-                        default=MISSING,
-                        type=v.clazz,
-                        help=v.description,
-                        required=False
-                    )
+            for k, v in config_type.__dict__.items():
+                if not isinstance(v, Configurable):
+                    continue
+                full_path_joined = ".".join(v.full_path)
+                argument_parser.add_argument(
+                    f"--{self.prefix}{full_path_joined}",
+                    default=MISSING,
+                    type=v.clazz,
+                    help=v.description,
+                    required=False
+                )
 
     def process_parsed_arguments(self, value):
         for config_type in self._managed_configurations:
-            for t in reversed(inspect.getmro(config_type)):
-                for k, v in t.__dict__.items():
-                    if not isinstance(v, Configurable):
-                        continue
-                    full_path_joined = ".".join(v.full_path)
-                    val = getattr(value, self.prefix + full_path_joined)
-                    if val == MISSING:
-                        continue
-                    self._dict[full_path_joined] = val
+            for k, v in config_type.__dict__.items():
+                if not isinstance(v, Configurable):
+                    continue
+                full_path_joined = ".".join(v.full_path)
+                val = getattr(value, self.prefix + full_path_joined)
+                if val == MISSING:
+                    continue
+                self._dict[full_path_joined] = val
 
     def get_value(self, path: ConfigPathT):
         joined_path = ".".join(path)

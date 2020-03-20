@@ -19,6 +19,7 @@ from typing import TypeVar, List, Any, Callable, Type, Optional, Generic, Tuple,
 from grundzeug.container import IContainer
 from grundzeug.container.contracts import register_contract_to_type_converter
 from grundzeug.container.di import InjectAnnotation
+from grundzeug.util.sentinels import make_sentinel
 
 ConfigT = TypeVar("ConfigT")
 CanonicalConfigPathT = Tuple[str, ...]
@@ -27,12 +28,7 @@ ContractVarT = TypeVar("ContractVarT")
 
 CONFIGURATION_METADATA_KEY = "GRUNDZEUG_CONFIGURATION_METADATA"
 
-
-class _MISSING_TYPE:
-    pass
-
-
-MISSING = _MISSING_TYPE()
+_MISSING_TYPE, MISSING = make_sentinel()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -117,6 +113,7 @@ class Configurable(Generic[ConfigT]):
         """
         configurable = Configurable(self.path, clazz=self.clazz, default=self.default)
         configurable.validation_rules = [*self.validation_rules, rule]
+        configurable._owner_class = self._owner_class
         return configurable
 
     def validate(self, value, container: IContainer) -> None:
@@ -163,6 +160,7 @@ register_contract_to_type_converter(lambda x: x.clazz if isinstance(x, Configura
 @dataclasses.dataclass(frozen=True)
 class ConfigurationClassMetadata():
     path: CanonicalConfigPathT
+    original_class: type
 
 
 def configuration(path: ConfigPathT):
@@ -174,36 +172,40 @@ def configuration(path: ConfigPathT):
     :param path: The configuration path (key) prefix for all Configurables in this class.
     """
 
-    def _configurationclass(_cls):
-        for t in reversed(inspect.getmro(_cls)):
+    def _configurationclass(_cls: type):
+        if "__grundzeug_configuration__" in _cls.__dict__:
+            _cls = _cls.__dict__["__grundzeug_configuration__"].original_class
+        _clsCopy = type(f"{_cls.__name__}___{'_'.join(path)}", (_cls,), {})
+
+        for t in reversed(inspect.getmro(_clsCopy)):
             for k, v in t.__dict__.items():
                 if not isinstance(v, Configurable):
                     continue
                 v2 = Configurable(clazz=v.clazz, path=tuple(v.path), default=v.default)
-                v2._owner_class = _cls
+                v2._owner_class = _clsCopy
                 v2._field_name = k
                 v2.validation_rules = list(v.validation_rules)
 
                 setattr(
-                    _cls,
+                    _clsCopy,
                     k,
                     v2
                 )
-        _cls.__grundzeug_configuration__ = ConfigurationClassMetadata(
-            path=tuple(path)
+        _clsCopy.__grundzeug_configuration__ = ConfigurationClassMetadata(
+            path=tuple(path),
+            original_class=_cls
         )
 
         def _asdict(self):
             res = {}
-            for t in reversed(inspect.getmro(type(self))):
-                for k, v in t.__dict__.items():
-                    if not isinstance(v, Configurable):
-                        continue
-                    res[k] = getattr(self, k)
+            for k, v in type(self).__dict__.items():
+                if not isinstance(v, Configurable):
+                    continue
+                res[k] = getattr(self, k)
             return res
 
-        _cls.asdict = _asdict
-        return _cls
+        _clsCopy.asdict = _asdict
+        return _clsCopy
 
     return _configurationclass
 

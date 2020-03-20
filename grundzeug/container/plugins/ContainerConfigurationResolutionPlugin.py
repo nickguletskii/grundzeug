@@ -64,11 +64,10 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
             self,
             configuration_clazz: type
     ) -> Generator[Tuple[str, Configurable], None, None]:
-        for t in reversed(inspect.getmro(configuration_clazz)):
-            for k, v in t.__dict__.items():
-                if not isinstance(v, Configurable):
-                    continue
-                yield k, v
+        for k, v in configuration_clazz.__dict__.items():
+            if not isinstance(v, Configurable):
+                continue
+            yield k, v
 
     def _collect_values_create_initial_state(
             self,

@@ -24,6 +24,14 @@ class ExampleConfigurationClass:
     default_property: int = Configurable[int](["boo"], default=3)
 
 
+RenamedExampleConfigurationClass = configuration(["extension", "foo", "bar"])(ExampleConfigurationClass)
+
+
+@configuration(["extension", "foo", "bar"])
+class ExtendedExampleConfigurationClass(ExampleConfigurationClass):
+    unique_property: int = Configurable[int](["unique"])
+
+
 def injectable_func_type(
         arg: int,
         kwarg: str,
@@ -61,6 +69,33 @@ class TestConfig:
                     "bar": {
                         "baz": "42",
                         "boo": "32"
+                    }
+                }
+            })
+        )
+        container.register_instance[Converter[str, int]](Converter[str, int].cast())
+        return container
+
+    @pytest.fixture()
+    def full_container_with_extension_class(self):
+        container = Container()
+        container.add_plugin(ContainerConfigurationResolutionPlugin())
+        container.add_plugin(ContainerConverterResolutionPlugin())
+        container.register_instance[BeanList[ConfigurationProvider]](
+            DictTreeConfigurationProvider({
+                "foo": {
+                    "bar": {
+                        "baz": "42",
+                        "boo": "32"
+                    }
+                },
+                "extension": {
+                    "foo": {
+                        "bar": {
+                            "baz": "6",
+                            "boo": "7",
+                            "unique": "8"
+                        }
                     }
                 }
             })
@@ -154,6 +189,15 @@ class TestConfig:
         assert full_container.resolve[ExampleConfigurationClass.default_property]() == 32
         assert full_container_child.resolve[ExampleConfigurationClass.property]() == 62
         assert full_container_child.resolve[ExampleConfigurationClass.default_property]() == 32
+
+    def test_configuration_field_different_in_extended_child(self, full_container_with_extension_class):
+        assert full_container_with_extension_class.resolve[ExampleConfigurationClass.property]() == 42
+        assert full_container_with_extension_class.resolve[ExampleConfigurationClass.default_property]() == 32
+        assert full_container_with_extension_class.resolve[RenamedExampleConfigurationClass.property]() == 6
+        assert full_container_with_extension_class.resolve[RenamedExampleConfigurationClass.default_property]() == 7
+        assert full_container_with_extension_class.resolve[ExtendedExampleConfigurationClass.property]() == 6
+        assert full_container_with_extension_class.resolve[ExtendedExampleConfigurationClass.default_property]() == 7
+        assert full_container_with_extension_class.resolve[ExtendedExampleConfigurationClass.unique_property]() == 8
 
     def test_configuration_class_field_override_in_full_container_child(self, full_container, full_container_child):
         bean_from_root_container = full_container.resolve[ExampleConfigurationClass]()
