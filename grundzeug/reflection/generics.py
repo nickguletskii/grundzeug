@@ -81,20 +81,38 @@ def _patch_generic_alias():
 _patch_generic_alias()
 
 
+def specialize_class(specialized_class, process_default_classmethod: bool = True):
+    """
+    Update the class by overriding all fields set to instances of
+    :py:class:`~grundzeug.reflection.generics.generic_accessor` and methods decorated with
+    :py:func:`~grundzeug.reflection.generics.generic_classmethod` or ``@classmethod` (if
+    ``process_default_classmethod`` is set to ``True``).
+
+    :param specialized_class: The specialized class to update, as returned by \
+                              :py:meth:`~typing.Generic.__class_getitem__`.
+    :param process_default_classmethod: If set to ``False``, only methods decorated with \
+                                        @:py:func:`~grundzeug.reflection.generics.generic_classmethod` \
+                                        will receive specialized classes as arguments instead of the generic class. If \
+                                        set to ``True``, methods decorated with ``@classmethod`` will act like methods \
+                                        annotated with @:py:func:`~grundzeug.reflection.generics.generic_classmethod`.
+    """
+    supplemental_dict = {}
+    for name, class_member in specialized_class.__origin__.__dict__.items():
+        if isinstance(class_member, generic_classmethod) or \
+                (process_default_classmethod and isinstance(class_member, classmethod)):
+            _generic_aware_impl_wrap_classmethod(class_member, specialized_class, supplemental_dict, name)
+        if isinstance(class_member, generic_accessor):
+            supplemental_dict[name] = generic_accessor(class_member.type_var, _class_override=specialized_class)
+    specialized_class.__dict__[_extra_field_dict] = supplemental_dict
+
+
 def _generic_aware_impl(cls: type, process_default_classmethod: bool = True):
     orig__class_getitem__ = cls.__class_getitem__
 
     @functools.wraps(orig__class_getitem__)
     def __class_getitem__(cls):
         specialized_class = orig__class_getitem__(cls)
-        supplemental_dict = {}
-        for name, class_member in specialized_class.__origin__.__dict__.items():
-            if isinstance(class_member, generic_classmethod) or \
-                    (process_default_classmethod and isinstance(class_member, classmethod)):
-                _generic_aware_impl_wrap_classmethod(class_member, specialized_class, supplemental_dict, name)
-            if isinstance(class_member, generic_accessor):
-                supplemental_dict[name] = generic_accessor(class_member.type_var, _class_override=specialized_class)
-        specialized_class.__dict__[_extra_field_dict] = supplemental_dict
+        specialize_class(specialized_class, process_default_classmethod=process_default_classmethod)
         return specialized_class
 
     cls.__class_getitem__ = __class_getitem__
@@ -103,6 +121,23 @@ def _generic_aware_impl(cls: type, process_default_classmethod: bool = True):
 
 
 def generic_aware(cls=None, *, process_default_classmethod: bool = True):
+    """
+    Makes :py:func:`~grundzeug.reflection.generics.generic_accessor` and
+    @:py:func:`~grundzeug.reflection.generics.generic_classmethod` work inside the decorated class.
+
+    If ``process_default_classmethod`` is set to ``True``, methods annotated with ``@classmethod`` are also going to
+    receive a specialized class instead of the generic class as an argument.
+
+
+
+    :param cls: The class to decorate.
+    :param process_default_classmethod: If set to ``False``, only methods decorated with \
+                                        @:py:func:`~grundzeug.reflection.generics.generic_classmethod` \
+                                        will receive specialized classes as arguments instead of the generic class. If \
+                                        set to ``True``, methods decorated with ``@classmethod`` will act like methods \
+                                        annotated with @:py:func:`~grundzeug.reflection.generics.generic_classmethod`.
+    """
+
     def wrap(cls):
         return _generic_aware_impl(cls, process_default_classmethod=process_default_classmethod)
 
@@ -115,6 +150,23 @@ _, _generic_class_override_sentinel = make_sentinel()
 
 
 class generic_accessor():
+    """
+    A field descriptor that specifies that this field should contain the value of the specified type variable.
+    The parent class must be @:py:func:`~grundzeug.reflection.generics.generic_aware`.
+
+    Usage:
+
+    .. code-block:: python
+
+        T = TypeVar("T")
+        @generic_aware
+        class GenericClass(Generic[T]):
+            generic_T = generic_accessor(T)
+
+        assert GenericClass[str].generic_T == str
+
+    """
+
     def __init__(self, type_var: TypeVar, *, _class_override=_generic_class_override_sentinel):
         """
         :param type_var:

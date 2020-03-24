@@ -15,31 +15,51 @@ from typing import Generic, TypeVar
 
 from grundzeug.reflection.generics import generic_accessor, generic_aware, get_type_arguments
 
+T = TypeVar("T")
+
+
+@generic_aware
+class _GenericClass(Generic[T]):
+    generic_T = generic_accessor(T)
+
+
+class _DerivedGenericClass(_GenericClass):
+    pass
+
+
+@generic_aware
+class _GenericClassWithMethod(Generic[T]):
+    @classmethod
+    def foo(cls):
+        return get_type_arguments(cls)[T]
+
+
+class _DerivedGenericClassWithMethod(_GenericClassWithMethod):
+    pass
+
 
 class TestGenerics:
     def test_generic_accessor(self):
-        T = TypeVar("T")
-
-        @generic_aware
-        class _GenericClass(Generic[T]):
-            generic_T = generic_accessor(T)
-
         cls1 = _GenericClass[int]
         cls2 = _GenericClass[str]
         assert cls1.generic_T == int
         assert cls2.generic_T == str
 
+    def test_generic_accessor_on_derived_class(self):
+        cls1 = _DerivedGenericClass[int]
+        cls2 = _DerivedGenericClass[str]
+        assert cls1.generic_T == int
+        assert cls2.generic_T == str
+
     def test_generic_classmethod(self):
-        T = TypeVar("T")
+        cls1 = _GenericClassWithMethod[int]
+        cls2 = _GenericClassWithMethod[str]
+        assert cls1.foo() == int
+        assert cls2.foo() == str
 
-        @generic_aware
-        class _GenericClass(Generic[T]):
-            @classmethod
-            def foo(cls):
-                return get_type_arguments(cls)[T]
-
-        cls1 = _GenericClass[int]
-        cls2 = _GenericClass[str]
+    def test_derived_generic_classmethod(self):
+        cls1 = _DerivedGenericClassWithMethod[int]
+        cls2 = _DerivedGenericClassWithMethod[str]
         assert cls1.foo() == int
         assert cls2.foo() == str
 
