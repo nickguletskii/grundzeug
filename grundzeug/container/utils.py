@@ -17,6 +17,13 @@ from grundzeug.container import IContainer, ContainerResolutionPlugin
 
 
 def lookup_container_plugin_by_type(container: IContainer, plugin_type: Type[ContainerResolutionPlugin]):
+    """
+    Given a container, finds the first plugin that is an instance of the specified type.
+
+    :param container: The container to perform the lookup on.
+    :param plugin_type: The type of the plugin to find.
+    :return: The first instance of ``plugin_type`` in ``container.plugins``.
+    """
     return next(
         plugin
         for plugin

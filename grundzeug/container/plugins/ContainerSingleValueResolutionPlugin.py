@@ -20,7 +20,10 @@ from grundzeug.container.exceptions import ContainerAlreadyHasRegistrationError
 
 
 class ContainerSingleValueResolutionPlugin(ContainerResolutionPlugin):
-
+    """
+    Default container resolution plugin for Grundzeug containers. Registers and looks up beans by registration keys
+    without any bells and whistles. Returns the first matching bean during container chain traversal.
+    """
     def register(
             self,
             key: RegistrationKey,

@@ -11,8 +11,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from typing import TypeVar, Type, Tuple
 
-def make_sentinel():
+T = TypeVar("T", bound=object)
+
+
+def make_sentinel() -> Tuple[Type[T], T]:
+    """
+    Creates a sentinel type and value.
+
+    :return: A tuple, where the first element is the sentinel type, and the second element is the sentinel value.
+    """
+
     class _Sentinel():
         pass
 

@@ -21,6 +21,12 @@ DictValueT = TypeVar("DictValueT")
 
 
 def dictionary_union(*dictionaries: Dict[DictKeyT, DictValueT]) -> Dict[DictKeyT, DictValueT]:
+    """
+    Given an iterable of dictionaries, return the union of these dictionaries.
+
+    :param dictionaries: The dictionaries to combine.
+    :return: A dictionary containing the keys present in the input dictionaries.
+    """
     return dict(item for dictionary in dictionaries for item in dictionary.items())
 
 
