@@ -87,6 +87,6 @@ class InjectIndexer:
         return InjectAnnotation(contract=contract, bean_name=bean_name)
 
 
-inject = InjectIndexer()
+inject_value = InjectIndexer()
 
-__all__ = ["TypeIntrospector", "register_type_introspector", "InjectAnnotation", "InjectIndexer", "inject"]
+__all__ = ["TypeIntrospector", "register_type_introspector", "InjectAnnotation", "InjectIndexer", "inject_value"]

@@ -125,7 +125,7 @@ class Configurable(Generic[ConfigT]):
         :param container: The container to use for injecting the validation rule functions.
         """
         for rule in self.validation_rules:
-            container.inject_func(rule)(value)
+            container.inject(rule)(value)
 
     @property
     def full_path(self) -> CanonicalConfigPathT:

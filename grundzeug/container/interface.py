@@ -593,7 +593,7 @@ class Injector:
     """
 
     @abstractmethod
-    def inject_func(self, func: FuncT) -> FuncT:
+    def inject(self, func: FuncT) -> FuncT:
         """
         Inject the required beans into the specified function. For instance, let's say we have a function ``foo``
         defined as follows:
@@ -604,12 +604,12 @@ class Injector:
             def foo(arg: int, bean: Inject[IBean]) -> Any:
                 ...
 
-        Passing ``foo`` through :py:meth:`~grundzeug.container.Injector.inject_func` will partially apply
+        Passing ``foo`` through :py:meth:`~grundzeug.container.Injector.inject` will partially apply
         the function with the requested beans:
 
         .. code-block:: python
 
-            injected_foo: Callable[[int], Any] = injector.inject_func(foo)
+            injected_foo: Callable[[int], Any] = injector.inject(foo)
             foo(42) # No need to pass 'bean'.
 
         :param func: The function to inject beans into.

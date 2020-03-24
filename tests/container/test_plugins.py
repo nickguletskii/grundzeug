@@ -16,7 +16,7 @@ from typing import Any, Tuple
 import pytest
 
 from grundzeug.container import Container, RegistrationKey
-from grundzeug.container.di import Inject, inject
+from grundzeug.container.di import Inject, inject_value
 from grundzeug.container.plugins import BeanList, ContainerBeanListResolutionPlugin
 from grundzeug.container.plugins.ContainerConverterResolutionPlugin import ContainerConverterResolutionPlugin
 from grundzeug.container.utils import lookup_container_plugin_by_type
@@ -47,7 +47,7 @@ def injectable_func_type_list(
 def injectable_func_field_list(
         arg: int,
         kwarg: str,
-        bean: BeanList[IBean] = inject[BeanList[IBean]]()
+        bean: BeanList[IBean] = inject_value[BeanList[IBean]]()
 ) -> Tuple[int, str, BeanList[IBean]]:
     return arg, kwarg, bean
 
@@ -69,7 +69,7 @@ class TestContainerResolutionPlugins:
         container.register_factory[BeanList[IBean]](lambda: Bean())
         container.register_factory[BeanList[IBean]](lambda: Bean2())
 
-        x, y, z = container.inject_func(func)(42, kwarg="baz")
+        x, y, z = container.inject(func)(42, kwarg="baz")
         assert x == 42
         assert y == "baz"
         assert isinstance(z, BeanList)

@@ -61,7 +61,7 @@ class ContainerFactoryContainerRegistration(ContainerRegistration):
     def __call__(self, container: IContainer) -> Any:
         if not self._registered:
             self._registered = True
-            self._value = self.container.inject_func(self.factory)()
+            self._value = self.container.inject(self.factory)()
         return self._value
 
     @property
@@ -84,7 +84,7 @@ class TransientFactoryContainerRegistration(ContainerRegistration):
         self.factory = factory
 
     def __call__(self, container: IContainer) -> Any:
-        return container.inject_func(self.factory)()
+        return container.inject(self.factory)()
 
     @property
     def is_cacheable(self):
@@ -110,7 +110,7 @@ class HierarchicalFactoryContainerRegistration(ContainerRegistration):
 
     def __call__(self, container: IContainer) -> Any:
         if not container in self._values:
-            self._values[container] = container.inject_func(self.factory)()
+            self._values[container] = container.inject(self.factory)()
         return self._values[container]
 
     @property

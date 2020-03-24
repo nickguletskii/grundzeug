@@ -4,7 +4,7 @@ import pytest
 
 from grundzeug.config import configuration, Configurable, inject_config, MissingConfigurationKeysException
 from grundzeug.config.providers.common import DictTreeConfigurationProvider, ConfigurationProvider
-from grundzeug.container.di import Inject, inject_func
+from grundzeug.container.di import Inject, inject
 from grundzeug.container.impl import Container
 from grundzeug.container.plugins import BeanList
 from grundzeug.container.plugins.ContainerConfigurationResolutionPlugin import ContainerConfigurationResolutionPlugin
@@ -175,7 +175,7 @@ class TestConfig:
 
     @injectable_func_parametrize
     def test_func_configuration_field_injection(self, func, full_container):
-        x, y, z = inject_func(full_container, func)(56, kwarg="baz")
+        x, y, z = inject(full_container, func)(56, kwarg="baz")
         assert x == 56
         assert y == "baz"
         assert z == 42

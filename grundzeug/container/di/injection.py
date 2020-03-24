@@ -25,7 +25,7 @@ def injectable(cls: ContractT) -> ContractT:
     class __wrapper(cls):
         def __init__(self, __grundzeug_container: IContainer, *args, **kwargs):
             inject_fields(__grundzeug_container, self)
-            inject_func(__grundzeug_container, super().__init__)(*args, **kwargs)
+            inject(__grundzeug_container, super().__init__)(*args, **kwargs)
 
     setattr(cls, "__injectable__", __wrapper)
     return cls
@@ -37,7 +37,7 @@ def inject_fields(container: IContainer, instance: Any):
             type_introspector.inject_fields(t, instance, container)
 
 
-def inject_func(container: IContainer, func):
+def inject(container: IContainer, func):
     if inspect.isclass(func) and hasattr(func, "__injectable__"):
         func = functools.partial(func.__injectable__, container)
     else:
@@ -58,4 +58,4 @@ def inject_func(container: IContainer, func):
     return func
 
 
-__all__ = ["injectable", "inject_fields", "inject_func"]
+__all__ = ["injectable", "inject_fields", "inject"]

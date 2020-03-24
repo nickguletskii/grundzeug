@@ -5,7 +5,7 @@ from typing import Tuple
 
 import pytest
 
-from grundzeug.container.di import injectable, inject, Inject, InjectNamed
+from grundzeug.container.di import injectable, inject_value, Inject, InjectNamed
 from grundzeug.container.impl import Container
 from grundzeug.container.registrations import TransientFactoryContainerRegistration, \
     HierarchicalFactoryContainerRegistration
@@ -55,8 +55,8 @@ class SecondBeanType:
 
 @injectable
 class SecondBeanField:
-    unnamed_bean: IBean = inject[IBean]
-    named_bean: IBean = inject[IBean].named("named_bean")
+    unnamed_bean: IBean = inject_value[IBean]
+    named_bean: IBean = inject_value[IBean].named("named_bean")
 
     def __init__(self, arg: int, kwarg: str):
         self.kwarg = kwarg
@@ -75,8 +75,8 @@ def injectable_func_type(
 def injectable_func_field(
         arg: int,
         kwarg: str,
-        bean: IBean = inject[IBean](),
-        named_bean: IBean = inject[IBean](bean_name="named_bean")
+        bean: IBean = inject_value[IBean](),
+        named_bean: IBean = inject_value[IBean](bean_name="named_bean")
 ) -> Tuple[int, str, IBean, IBean]:
     return arg, kwarg, bean, named_bean
 
@@ -98,7 +98,7 @@ class TestDI:
         container.register_instance[IBean](bean)
         named_bean = Bean("named_bean")
         container.register_instance[IBean](named_bean, bean_name="named_bean")
-        x, y, unnamed_bean_received, named_bean_received = container.inject_func(func)(42, kwarg="baz")
+        x, y, unnamed_bean_received, named_bean_received = container.inject(func)(42, kwarg="baz")
         assert x == 42
         assert y == "baz"
         assert unnamed_bean_received == bean
@@ -111,7 +111,7 @@ class TestDI:
         container = Container()
         container.register_factory[IBean](lambda: Bean("unnamed_bean"))
         container.register_factory[IBean](lambda: Bean("named_bean"), bean_name="named_bean")
-        x, y, unnamed_bean_received, named_bean_received = container.inject_func(func)(42, kwarg="baz")
+        x, y, unnamed_bean_received, named_bean_received = container.inject(func)(42, kwarg="baz")
         assert x == 42
         assert y == "baz"
         assert isinstance(unnamed_bean_received, Bean)
@@ -124,7 +124,7 @@ class TestDI:
         container = Container()
         container.register_type[IBean, UnnamedBean]()
         container.register_type[IBean, NamedBean](bean_name="named_bean")
-        x, y, unnamed_bean_received, named_bean_received = container.inject_func(func)(42, kwarg="baz")
+        x, y, unnamed_bean_received, named_bean_received = container.inject(func)(42, kwarg="baz")
         assert x == 42
         assert y == "baz"
         assert isinstance(unnamed_bean_received, Bean)
@@ -144,8 +144,8 @@ class TestDI:
             bean_name="named_bean",
             registration_type=TransientFactoryContainerRegistration
         )
-        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject_func(func)(42, kwarg="baz")
-        x2, y2, unnamed_bean_received2, named_bean_received2 = container.inject_func(func)(42, kwarg="baz")
+        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject(func)(42, kwarg="baz")
+        x2, y2, unnamed_bean_received2, named_bean_received2 = container.inject(func)(42, kwarg="baz")
         assert x1 == 42
         assert y1 == "baz"
         assert isinstance(unnamed_bean_received1, Bean)
@@ -167,8 +167,8 @@ class TestDI:
         container.register_factory[IBean](lambda: Bean("unnamed_bean"))
         container.register_factory[IBean](lambda: Bean("named_bean"), bean_name="named_bean")
         child_container = Container(container)
-        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject_func(func)(42, kwarg="baz")
-        x2, y2, unnamed_bean_received2, named_bean_received2 = child_container.inject_func(func)(42, kwarg="baz")
+        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject(func)(42, kwarg="baz")
+        x2, y2, unnamed_bean_received2, named_bean_received2 = child_container.inject(func)(42, kwarg="baz")
         assert x1 == 42
         assert y1 == "baz"
         assert isinstance(unnamed_bean_received1, Bean)
@@ -197,8 +197,8 @@ class TestDI:
             registration_type=HierarchicalFactoryContainerRegistration
         )
         child_container = Container(container)
-        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject_func(func)(42, kwarg="baz")
-        x2, y2, unnamed_bean_received2, named_bean_received2 = child_container.inject_func(func)(42, kwarg="baz")
+        x1, y1, unnamed_bean_received1, named_bean_received1 = container.inject(func)(42, kwarg="baz")
+        x2, y2, unnamed_bean_received2, named_bean_received2 = child_container.inject(func)(42, kwarg="baz")
         assert x1 == 42
         assert y1 == "baz"
         assert isinstance(unnamed_bean_received1, Bean)
@@ -225,7 +225,7 @@ class TestDI:
         container = Container()
         container.register_factory[IBean](lambda: Bean("unnamed_bean"))
         container.register_factory[IBean](lambda: Bean("named_bean"), bean_name="named_bean")
-        second_bean = container.inject_func(clazz)(42, kwarg="baz")
+        second_bean = container.inject(clazz)(42, kwarg="baz")
         assert second_bean.arg == 42
         assert second_bean.kwarg == "baz"
         assert isinstance(second_bean.unnamed_bean, Bean)
@@ -262,7 +262,7 @@ class TestDI:
 
         container2.register_instance[IBean](bean)
         container2.register_instance[IBean](bean, bean_name="named_bean")
-        container2.inject_func(func)(42, kwarg="baz")
+        container2.inject(func)(42, kwarg="baz")
 
         assert bean_removed == False
         assert plugin_storage_removed == False

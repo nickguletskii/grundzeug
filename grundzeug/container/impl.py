@@ -188,9 +188,9 @@ class ContainerInjector(Injector):
     def __init__(self, container: "IContainer"):
         self.__container = container
 
-    def inject_func(self, func: FuncT) -> FuncT:
-        from grundzeug.container.di import inject_func
-        return inject_func(self.__container, func)
+    def inject(self, func: FuncT) -> FuncT:
+        from grundzeug.container.di import inject
+        return inject(self.__container, func)
 
 
 @set_module("grundzeug.container")
@@ -414,9 +414,9 @@ class Container(IContainer):
     def try_resolve(self) -> IContainerResolveIndexer:
         return self._try_resolve_indexer
 
-    def inject_func(self, func: FuncT) -> FuncT:
-        from grundzeug.container.di import inject_func
-        return inject_func(self, func)
+    def inject(self, func: FuncT) -> FuncT:
+        from grundzeug.container.di import inject
+        return inject(self, func)
 
     def get_plugin_storage(self, plugin: ContainerResolutionPlugin):
         if plugin not in self._plugin_storage:
