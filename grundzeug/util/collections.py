@@ -27,8 +27,11 @@ def dictionary_union(*dictionaries: Dict[DictKeyT, DictValueT]) -> Dict[DictKeyT
 _, _SENTINEL = make_sentinel()
 
 
-def zip_equal(*p):
-    for i, tup in enumerate(zip_longest(*p, fillvalue=_SENTINEL)):
+def zip_equal(*args):
+    """
+    Like ``zip``, but throws an error if the number of elements in the iterables are different.
+    """
+    for i, tup in enumerate(zip_longest(*args, fillvalue=_SENTINEL)):
         tup: tuple = tup
         if _SENTINEL in tup:
             pos = tup.index(_SENTINEL)
