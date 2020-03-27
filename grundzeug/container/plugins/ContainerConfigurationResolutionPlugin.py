@@ -90,21 +90,21 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
             return self._collect_values_create_initial_state(paths_to_collect)
         else:
             configurable: Configurable = key.bean_contract
-            return self._collect_values_create_initial_state({configurable.full_path})
+            return self._collect_values_create_initial_state({configurable.configurable_metadata.full_path})
 
     def get_paths_to_collect(self, clazz):
         cur_class_paths = {
-            c.full_path
+            c.configurable_metadata.full_path
             for k, c
             in self._iterate_configuration_class_fields(clazz)
-            if not is_configuration_class(c.clazz)
+            if not is_configuration_class(c.configurable_metadata.clazz)
         }
         # Add paths from all child configuration classes
         all_paths = cur_class_paths.union(*(
-            self.get_paths_to_collect(c.clazz)
+            self.get_paths_to_collect(c.configurable_metadata.clazz)
             for k, c
             in self._iterate_configuration_class_fields(clazz)
-            if is_configuration_class(c.clazz)
+            if is_configuration_class(c.configurable_metadata.clazz)
         ))
         return all_paths
 
@@ -149,8 +149,8 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
                 return ReturnMessage(bean, is_cacheable=True)
             else:
                 configurable: Configurable = key.bean_contract
-                value = local_state.collected_values[tuple(configurable.full_path)]
-                value = self._transform(value, configurable, container)
+                value = local_state.collected_values[tuple(configurable.configurable_metadata.full_path)]
+                value = self._transform_value(value, configurable, container)
                 configurable.validate(value, container)
                 return ReturnMessage(value, is_cacheable=True)
         return ContinueMessage(local_state)
@@ -170,14 +170,14 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
             return ReturnMessage(bean, is_cacheable=True)
         else:
             configurable: Configurable = key.bean_contract
-            if configurable.default == MISSING:
+            if configurable.configurable_metadata.default == MISSING:
                 raise MissingConfigurationKeysException(
                     local_state.values_left_to_collect,
-                    f"Could not resolve property {key.bean_contract.field_path} because there's no config provider "
-                    f"satisfying config key {configurable.full_path}."
+                    f"Could not resolve property {configurable.configurable_metadata.field_path} because there's no "
+                    f"config provider satisfying config key {configurable.configurable_metadata.full_path}."
                 )
-            configurable.validate(configurable.default, container)
-            return ReturnMessage(configurable.default, is_cacheable=True)
+            configurable.validate(configurable.configurable_metadata.default, container)
+            return ReturnMessage(configurable.configurable_metadata.default, is_cacheable=True)
 
     def _construct_configuration_class(
             self,
@@ -187,14 +187,14 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
     ) -> Any:
         bean = clazz()
         for k, c in self._iterate_configuration_class_fields(clazz):
-            full_path = tuple(c.full_path)
-            if is_configuration_class(c.clazz):
-                value = self._construct_configuration_class(c.clazz, local_state, container)
+            full_path = tuple(c.configurable_metadata.full_path)
+            if is_configuration_class(c.configurable_metadata.clazz):
+                value = self._construct_configuration_class(c.configurable_metadata.clazz, local_state, container)
             elif full_path in local_state.collected_values:
                 value = local_state.collected_values[full_path]
-                value = self._transform(value, c, container)
-            elif c.default != MISSING:
-                value = c.default
+                value = self._transform_value(value, c, container)
+            elif c.configurable_metadata.default != MISSING:
+                value = c.configurable_metadata.default
             else:
                 raise Exception("Impossible situation: this case should've been handled by the "
                                 "len(missing_values) != 0 check above!")
@@ -203,11 +203,27 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
             setattr(bean, k, value)
         return bean
 
-    def _transform(self, value, configurable: Configurable, container: IContainer):
-        converter = container.try_resolve[Converter[type(value), configurable.clazz]]()
+    def _transform_value(self, value, configurable: Configurable, container: IContainer):
+        converter = container.try_resolve[Converter[type(value), configurable.configurable_metadata.clazz]]()
         if converter is BEAN_NOT_FOUND:
-            converter = Converter[type(value), configurable.clazz].identity()
+            converter = Converter[type(value), configurable.configurable_metadata.clazz].identity()
         return converter(value)
+
+    def _get_paths_of_configurables_with_defaults(self, clazz):
+        cur_class_paths = {
+            c.configurable_metadata.full_path
+            for k, c
+            in self._iterate_configuration_class_fields(clazz)
+            if c.configurable_metadata.default != MISSING
+        }
+        # Add paths from all child configuration classes
+        all_paths = cur_class_paths.union(*(
+            self._get_paths_of_configurables_with_defaults(c.configurable_metadata.clazz)
+            for k, c
+            in self._iterate_configuration_class_fields(clazz)
+            if is_configuration_class(c.configurable_metadata.clazz)
+        ))
+        return all_paths
 
     def _assert_no_missing_configuration_keys(
             self,
@@ -215,12 +231,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
             local_state: _ConfigurationValueCollectionState
     ) -> None:
         missing_values = local_state.values_left_to_collect \
-            .difference({
-            c.full_path
-            for k, c
-            in self._iterate_configuration_class_fields(key.bean_contract)
-            if c.default != MISSING
-        })
+            .difference(self._get_paths_of_configurables_with_defaults(key.bean_contract))
         if len(missing_values) != 0:
             raise MissingConfigurationKeysException(
                 missing_values,

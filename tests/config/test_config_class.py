@@ -32,8 +32,8 @@ class ExampleConfigurationClassInheritor(ExampleConfigurationClass):
 
 class TestConfigClass:
     def test_inheritance_copies_configurable(self):
-        assert ExampleConfigurationClass.property.full_path == ('foo', 'bar', 'baz')
-        assert ExampleConfigurationClassInheritor.property.full_path == ('foo2', 'bar2', 'baz')
+        assert ExampleConfigurationClass.property.configurable_metadata.full_path == ('foo', 'bar', 'baz')
+        assert ExampleConfigurationClassInheritor.property.configurable_metadata.full_path == ('foo2', 'bar2', 'baz')
 
     @pytest.fixture()
     def container(self):

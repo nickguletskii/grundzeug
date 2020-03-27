@@ -22,7 +22,15 @@ class ExampleConfigurationClass:
 
 @configuration(["foo"])
 class ExampleParentConfigurationClass:
-    child: ExampleConfigurationClass = Configurable[ExampleConfigurationClass](["bar"])
+    child: ExampleConfigurationClass = Configurable[ExampleConfigurationClass](["bar2"], override_config_path=False)
+
+
+ExampleConfigurationClassWithoutPath = configuration(ExampleConfigurationClass)
+
+
+@configuration(["foo"])
+class ExampleParentConfigurationClassWithRelativePath:
+    child: ExampleConfigurationClass = Configurable[ExampleConfigurationClassWithoutPath](["bar"])
 
 
 RenamedExampleConfigurationClass = configuration(["extension", "foo", "bar"])(ExampleConfigurationClass)
@@ -230,3 +238,12 @@ class TestConfig:
     def test_child_configuration_class_field(self, full_container):
         assert full_container.resolve[ExampleParentConfigurationClass.child.property]() == 42
         assert full_container.resolve[ExampleParentConfigurationClass.child.default_property]() == 32
+
+    def test_child_configuration_class(self, full_container):
+        parent_config_class = full_container.resolve[ExampleParentConfigurationClassWithRelativePath]()
+        assert parent_config_class.child.property == 42
+        assert parent_config_class.child.default_property == 32
+
+    def test_child_configuration_class_field(self, full_container):
+        assert full_container.resolve[ExampleParentConfigurationClassWithRelativePath.child.property]() == 42
+        assert full_container.resolve[ExampleParentConfigurationClassWithRelativePath.child.default_property]() == 32

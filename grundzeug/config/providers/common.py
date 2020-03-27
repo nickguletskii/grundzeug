@@ -102,7 +102,7 @@ class DictTreeConfigurationProvider(ConfigurationProvider):
             value
     ):
         if isinstance(reference, Configurable):
-            reference = reference.full_path
+            reference = reference.configurable_metadata.full_path
         reference: ConfigPathT = reference
 
         current_dictionary = self._dict

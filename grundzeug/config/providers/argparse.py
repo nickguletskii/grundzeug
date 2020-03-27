@@ -12,7 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import inspect
 from argparse import ArgumentParser
 from typing import Type, Set, Dict, Any
 
@@ -35,12 +34,12 @@ class ArgParseConfigurationProvider(ConfigurationProvider):
             for k, v in config_type.__dict__.items():
                 if not isinstance(v, Configurable):
                     continue
-                full_path_joined = ".".join(v.full_path)
+                full_path_joined = ".".join(v.configurable_metadata.full_path)
                 argument_parser.add_argument(
                     f"--{self.prefix}{full_path_joined}",
                     default=MISSING,
-                    type=v.clazz,
-                    help=v.description,
+                    type=v.configurable_metadata.clazz,
+                    help=v.configurable_metadata.description,
                     required=False
                 )
 
@@ -49,7 +48,7 @@ class ArgParseConfigurationProvider(ConfigurationProvider):
             for k, v in config_type.__dict__.items():
                 if not isinstance(v, Configurable):
                     continue
-                full_path_joined = ".".join(v.full_path)
+                full_path_joined = ".".join(v.configurable_metadata.full_path)
                 val = getattr(value, self.prefix + full_path_joined)
                 if val == MISSING:
                     continue
