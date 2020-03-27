@@ -83,6 +83,11 @@ class Configurable(Generic[ConfigT]):
                             :py:class:`~argparse.ArgumentParser`.
         :param clazz: The type of the configuration value.
         """
+        if is_configuration_class(clazz) and default is not MISSING:
+            raise ValueError("If the type of the configurable is a configuration class, the default value can't be "
+                             "specified directly. Please specify the defaults for all fields in the configuration"
+                             "class instead.")
+
         self.clazz = clazz
         self.path: CanonicalConfigPathT = tuple(path)
         self.default = default
@@ -152,6 +157,14 @@ class Configurable(Generic[ConfigT]):
                 super(_Configurable, self).__init__(path=path, clazz=item, default=default, description=description)
 
         return _Configurable
+
+    def __getattr__(self, name: str):
+        if is_configuration_class(self.clazz):
+            res = getattr(self.clazz, name)
+            if isinstance(res, Configurable):
+                # Support nested configurable retrieval: ParentConfigurationClass.child.property
+                return res
+        return super().__getattr__(name)
 
 
 register_contract_to_type_converter(lambda x: x.clazz if isinstance(x, Configurable) else None)  # type: ignore

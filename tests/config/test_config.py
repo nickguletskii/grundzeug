@@ -20,6 +20,11 @@ class ExampleConfigurationClass:
     default_property: int = Configurable[int](["boo"], default=3)
 
 
+@configuration(["foo"])
+class ExampleParentConfigurationClass:
+    child: ExampleConfigurationClass = Configurable[ExampleConfigurationClass](["bar"])
+
+
 RenamedExampleConfigurationClass = configuration(["extension", "foo", "bar"])(ExampleConfigurationClass)
 
 
@@ -216,3 +221,12 @@ class TestConfig:
 
     def test_configuration_class_field_default(self, container_lacks_key_with_default):
         assert container_lacks_key_with_default.resolve[ExampleConfigurationClass]().default_property == 3
+
+    def test_child_configuration_class(self, full_container):
+        parent_config_class = full_container.resolve[ExampleParentConfigurationClass]()
+        assert parent_config_class.child.property == 42
+        assert parent_config_class.child.default_property == 32
+
+    def test_child_configuration_class_field(self, full_container):
+        assert full_container.resolve[ExampleParentConfigurationClass.child.property]() == 42
+        assert full_container.resolve[ExampleParentConfigurationClass.child.default_property]() == 32

@@ -86,11 +86,27 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
             return None
 
         if is_configuration_class(key.bean_contract):
-            paths_to_collect = {c.full_path for k, c in self._iterate_configuration_class_fields(key.bean_contract)}
+            paths_to_collect = self.get_paths_to_collect(key.bean_contract)
             return self._collect_values_create_initial_state(paths_to_collect)
         else:
             configurable: Configurable = key.bean_contract
             return self._collect_values_create_initial_state({configurable.full_path})
+
+    def get_paths_to_collect(self, clazz):
+        cur_class_paths = {
+            c.full_path
+            for k, c
+            in self._iterate_configuration_class_fields(clazz)
+            if not is_configuration_class(c.clazz)
+        }
+        # Add paths from all child configuration classes
+        all_paths = cur_class_paths.union(*(
+            self.get_paths_to_collect(c.clazz)
+            for k, c
+            in self._iterate_configuration_class_fields(clazz)
+            if is_configuration_class(c.clazz)
+        ))
+        return all_paths
 
     def _collect_values_reduce(
             self,
@@ -129,7 +145,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
         local_state = self._collect_values_reduce(local_state, container, ancestor_container)
         if len(local_state.values_left_to_collect) == 0:
             if is_configuration_class(key.bean_contract):
-                bean = self._construct_configuration_class(key, local_state, container)
+                bean = self._construct_configuration_class(key.bean_contract, local_state, container)
                 return ReturnMessage(bean, is_cacheable=True)
             else:
                 configurable: Configurable = key.bean_contract
@@ -150,7 +166,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
 
         if is_configuration_class(key.bean_contract):
             self._assert_no_missing_configuration_keys(key, local_state)
-            bean = self._construct_configuration_class(key, local_state, container)
+            bean = self._construct_configuration_class(key.bean_contract, local_state, container)
             return ReturnMessage(bean, is_cacheable=True)
         else:
             configurable: Configurable = key.bean_contract
@@ -165,14 +181,16 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
 
     def _construct_configuration_class(
             self,
-            key: RegistrationKey,
+            clazz: type,
             local_state: _ConfigurationValueCollectionState,
             container: IContainer
     ) -> Any:
-        bean = key.bean_contract()
-        for k, c in self._iterate_configuration_class_fields(key.bean_contract):
+        bean = clazz()
+        for k, c in self._iterate_configuration_class_fields(clazz):
             full_path = tuple(c.full_path)
-            if full_path in local_state.collected_values:
+            if is_configuration_class(c.clazz):
+                value = self._construct_configuration_class(c.clazz, local_state, container)
+            elif full_path in local_state.collected_values:
                 value = local_state.collected_values[full_path]
                 value = self._transform(value, c, container)
             elif c.default != MISSING:
