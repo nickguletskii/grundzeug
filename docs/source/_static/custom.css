@@ -22,3 +22,7 @@
 .wy-side-scroll {
     background-color: #263d42;
 }
+
+.rst-content tt.literal, .rst-content tt.literal, .rst-content code.literal {
+    color: #404040 !important;
+}
