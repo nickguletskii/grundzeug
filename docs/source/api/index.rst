@@ -43,3 +43,8 @@ API reference
    :members:
    :undoc-members:
    :inherited-members:
+
+.. automodule:: grundzeug.reflection.types
+   :members:
+   :undoc-members:
+   :inherited-members:
