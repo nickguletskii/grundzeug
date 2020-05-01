@@ -82,4 +82,29 @@ trigger:
   event:
   - pull_request
 
-...
+---
+kind: pipeline
+type: docker
+name: master/docs
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  pull: always
+  image: python:3.8
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - cd docs
+  - make html
+- name: deploy
+  pull: always
+  image: minio/mc:latest
+  commands:
+  - mc mirror --debug --overwrite _site/ site/grundzeug-root/docs
+
+trigger:
+  branch:
+  - master
