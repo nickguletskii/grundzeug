@@ -103,7 +103,7 @@ steps:
   pull: always
   image: minio/mc:latest
   commands:
-  - mc mirror --debug --overwrite _site/ site/grundzeug-root/docs
+  - mc mirror --debug --overwrite docs/build/html/ site/grundzeug-root/docs
 
 trigger:
   branch:
