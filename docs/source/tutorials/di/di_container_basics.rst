@@ -183,7 +183,7 @@ When the factory is called, it also receives any required dependencies. The code
 
 .. code-block:: python
 
-    return container.inject_func(factory)()
+    return container.inject(factory)()
 
 Registration types
 ==================
