@@ -1,6 +1,9 @@
 API reference
 =============
 
+.. role:: python(code)
+    :language: python
+
 .. automodule:: grundzeug.container
    :members:
    :undoc-members:
