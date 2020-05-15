@@ -15,3 +15,5 @@
 from .ContainerBeanListResolutionPlugin import *
 from .ContainerConfigurationResolutionPlugin import *
 from .ContainerSingleValueResolutionPlugin import *
+from .ContainerAmbiguousResolutionPluginBase import *
+from .ContainerConverterResolutionPlugin import *
