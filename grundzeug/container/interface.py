@@ -72,14 +72,6 @@ class ContainerRegistration(ABC):
         """
         raise NotImplementedError()
 
-    @property
-    @abstractmethod
-    def is_cacheable(self):
-        """
-        :return: True if the beans returned by this registration instance may be reused.
-        """
-        raise NotImplementedError()
-
 
 @set_module("grundzeug.container")
 class GetBeanProtocol(typing_extensions.Protocol):
@@ -417,20 +409,41 @@ class IContainerRegisterTypeIndexer:
 
 
 @set_module("grundzeug.container")
+class BeanResolver(ABC):
+    """
+    Returned by container resolution plugins during bean resolution. The purpose of bean resolvers is to provide a
+    reusable mechanism for retrieving beans from containers without querying the plugins on subsequent resolutions.
+    """
+
+    @abstractmethod
+    def get(self):
+        """
+        :return: The bean for the registration key that this bean resolver is associated with.
+        """
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def is_cacheable(self) -> bool:
+        """
+        :return: ``True`` if this bean resolver may be persisted so that subsequent bean resolutions skip querying \
+                 plugins entirely.
+        """
+        raise NotImplementedError()
+
+
+@set_module("grundzeug.container")
 @dataclass(frozen=True)
 class ReturnMessage:
     """
     Returned by :py:meth:`~grundzeug.container.ContainerResolutionPlugin.resolve_bean_reduce` or
     :py:meth:`~resolve_bean_postprocess` when the plugin has found the requested bean.
     """
-    value: Any
-    """
-    The value (bean) to return.
-    """
 
-    is_cacheable: bool
+    resolver: BeanResolver
     """
-    Set to true to allow container implementations to cache this bean.
+    The resolver that will be used used to retrieve the actual bean. The plugins return resolvers instead of the beans
+    themselves because the resolvers are (sometimes) cacheable.
     """
 
 
@@ -825,4 +838,4 @@ __all__ = ["BEAN_NOT_FOUND_TYPE", "BEAN_NOT_FOUND", "RegistrationKey", "Containe
            "IContainerResolveIndexer", "RegisterInstanceProtocol", "IContainerRegisterInstanceIndexer",
            "RegisterFactoryProtocol", "IContainerRegisterFactoryIndexer", "RegisterTypeProtocol",
            "IContainerRegisterTypeIndexer", "ReturnMessage", "ContinueMessage", "NotFoundMessage",
-           "ContainerResolutionPlugin", "Injector", "IContainer", "ContractT"]
+           "ContainerResolutionPlugin", "Injector", "IContainer", "ContractT", "BeanResolver"]

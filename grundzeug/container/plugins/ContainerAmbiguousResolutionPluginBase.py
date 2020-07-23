@@ -19,6 +19,7 @@ from typing import Any, Union
 from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, ContainerResolutionPlugin, \
     IContainer, RegistrationKey, ContainerRegistration
 from grundzeug.container.exceptions import ContainerAlreadyHasRegistrationError
+from grundzeug.container.plugins.common import RegistrationBeanResolver
 
 
 class ContainerAmbiguousResolutionPluginBase(ContainerResolutionPlugin, ABC):
@@ -132,7 +133,7 @@ class ContainerAmbiguousResolutionPluginBase(ContainerResolutionPlugin, ABC):
         if tup is None:
             return NotFoundMessage(None)
         registration, assoc_container = tup
-        return ReturnMessage(registration(assoc_container), is_cacheable=registration.is_cacheable)
+        return ReturnMessage(RegistrationBeanResolver(registration=registration, container=assoc_container))
 
     def registrations(
             self,

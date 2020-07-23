@@ -23,6 +23,7 @@ from grundzeug.config.providers.common import ConfigurationProvider
 from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, ContainerResolutionPlugin, \
     IContainer, RegistrationKey, ContainerRegistration, BEAN_NOT_FOUND
 from grundzeug.container.plugins import BeanList
+from grundzeug.container.plugins.common import ValueBeanResolver
 from grundzeug.converters.common import Converter
 
 T = TypeVar("T")
@@ -146,13 +147,13 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
         if len(local_state.values_left_to_collect) == 0:
             if is_configuration_class(key.bean_contract):
                 bean = self._construct_configuration_class(key.bean_contract, local_state, container)
-                return ReturnMessage(bean, is_cacheable=True)
+                return ReturnMessage(ValueBeanResolver(bean))
             else:
                 configurable: Configurable = key.bean_contract
                 value = local_state.collected_values[tuple(configurable.configurable_metadata.full_path)]
                 value = self._transform_value(value, configurable, container)
                 configurable.validate(value, container)
-                return ReturnMessage(value, is_cacheable=True)
+                return ReturnMessage(ValueBeanResolver(value))
         return ContinueMessage(local_state)
 
     def resolve_bean_postprocess(
@@ -167,7 +168,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
         if is_configuration_class(key.bean_contract):
             self._assert_no_missing_configuration_keys(key, local_state)
             bean = self._construct_configuration_class(key.bean_contract, local_state, container)
-            return ReturnMessage(bean, is_cacheable=True)
+            return ReturnMessage(ValueBeanResolver(bean))
         else:
             configurable: Configurable = key.bean_contract
             if configurable.configurable_metadata.default == MISSING:
@@ -177,7 +178,7 @@ class ContainerConfigurationResolutionPlugin(ContainerResolutionPlugin):
                     f"config provider satisfying config key {configurable.configurable_metadata.full_path}."
                 )
             configurable.validate(configurable.configurable_metadata.default, container)
-            return ReturnMessage(configurable.configurable_metadata.default, is_cacheable=True)
+            return ReturnMessage(ValueBeanResolver(configurable.configurable_metadata.default))
 
     def _construct_configuration_class(
             self,

@@ -356,7 +356,7 @@ class Container(IContainer):
         key = RegistrationKey(contract, bean_name)
 
         if key in self.__cache:
-            return self.__cache[key]
+            return self.__cache[key].get()
 
         plugins = list(self.plugins)
         states = [
@@ -371,9 +371,10 @@ class Container(IContainer):
                 res = plugin.resolve_bean_reduce(key, states[i], self, current_container)
 
                 if isinstance(res, ReturnMessage):
-                    if res.is_cacheable:
-                        self.__cache_put(contract, res.value)
-                    return res.value
+                    resolver = res.resolver
+                    if resolver.is_cacheable:
+                        self.__cache_put(key, resolver)
+                    return resolver.get()
                 elif isinstance(res, NotFoundMessage):
                     states[i] = res.state
                 elif isinstance(res, ContinueMessage):
@@ -387,9 +388,10 @@ class Container(IContainer):
         for i, plugin in enumerate(self.plugins):
             res = plugin.resolve_bean_postprocess(key, states[i], self)
             if isinstance(res, ReturnMessage):
-                if res.is_cacheable:
-                    self.__cache_put(contract, res.value)
-                return res.value
+                resolver = res.resolver
+                if resolver.is_cacheable:
+                    self.__cache_put(key, resolver)
+                return resolver.get()
             elif isinstance(res, NotFoundMessage):
                 pass
             else:

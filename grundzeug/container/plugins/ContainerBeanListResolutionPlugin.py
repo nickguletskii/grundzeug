@@ -15,13 +15,26 @@ import typing
 from typing import Any, Union, TypeVar, Generic
 
 from grundzeug.container.interface import ContainerResolutionPlugin, RegistrationKey, ContainerRegistration, IContainer, \
-    ReturnMessage, ContinueMessage, NotFoundMessage, ContractT
+    ReturnMessage, ContinueMessage, NotFoundMessage, ContractT, BeanResolver
+from grundzeug.container.plugins.common import RegistrationBeanResolver
 
 T = TypeVar("T")
 
 
 class BeanList(Generic[T], tuple, typing.Iterable[T], typing.Sized):
     pass
+
+
+class _MultiBeanResolver(BeanResolver):
+    def __init__(self, resolvers: typing.List[BeanResolver]):
+        self.resolvers = resolvers
+
+    def get(self):
+        return BeanList((resolver.get() for resolver in self.resolvers))
+
+    @property
+    def is_cacheable(self) -> bool:
+        return all(x.is_cacheable for x in self.resolvers)
 
 
 class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
@@ -70,7 +83,7 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
             key: RegistrationKey,
             container: IContainer
     ) -> Any:
-        return ([], True)
+        return []
 
     def resolve_bean_reduce(
             self,
@@ -82,22 +95,19 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
         if not self.applies_to(key.bean_contract):
             return NotFoundMessage(local_state)
 
-        beans, is_cacheable = local_state
+        bean_resolvers: typing.List[RegistrationBeanResolver] = local_state
 
         registry = ancestor_container.get_plugin_storage(self)
         registrations = registry[key]
 
-        if is_cacheable:
-            is_cacheable = all(registration.is_cacheable for registration in registrations)
-
         if key in registry:
-            beans = beans + \
-                    [
-                        registration(container)
-                        for registration
-                        in registrations
-                    ]
-        return ContinueMessage((beans, is_cacheable))
+            bean_resolvers = bean_resolvers + \
+                             [
+                                 RegistrationBeanResolver(registration=registration, container=container)
+                                 for registration
+                                 in registrations
+                             ]
+        return ContinueMessage(bean_resolvers)
 
     def resolve_bean_postprocess(
             self,
@@ -105,14 +115,11 @@ class ContainerBeanListResolutionPlugin(ContainerResolutionPlugin):
             local_state: Any,
             container: IContainer
     ) -> Union[ReturnMessage, NotFoundMessage]:
-        beans, is_cacheable = local_state
+        bean_resolvers = local_state
         if not self.applies_to(key.bean_contract):
             return NotFoundMessage(local_state)
 
-        return ReturnMessage(
-            BeanList(beans),
-            is_cacheable=is_cacheable
-        )
+        return ReturnMessage(_MultiBeanResolver(bean_resolvers))
 
     def registrations(
             self,

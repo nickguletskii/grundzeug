@@ -17,6 +17,7 @@ from typing import Any, Union
 from grundzeug.container.interface import ReturnMessage, ContinueMessage, NotFoundMessage, ContainerResolutionPlugin, \
     IContainer, RegistrationKey, ContainerRegistration
 from grundzeug.container.exceptions import ContainerAlreadyHasRegistrationError
+from grundzeug.container.plugins.common import RegistrationBeanResolver
 
 
 class ContainerSingleValueResolutionPlugin(ContainerResolutionPlugin):
@@ -55,7 +56,7 @@ class ContainerSingleValueResolutionPlugin(ContainerResolutionPlugin):
 
         if key in registry:
             registration = registry[key]
-            return ReturnMessage(registration(container), is_cacheable=registration.is_cacheable)
+            return ReturnMessage(RegistrationBeanResolver(registration=registration, container=container))
         return NotFoundMessage(None)
 
     def resolve_bean_postprocess(
