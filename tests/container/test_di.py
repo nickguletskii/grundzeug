@@ -1,6 +1,7 @@
 import gc
 import weakref
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Tuple
 
 import pytest
@@ -51,6 +52,12 @@ class SecondBeanType:
     def __init__(self, arg: int, kwarg: str):
         self.kwarg = kwarg
         self.arg = arg
+
+
+@dataclass
+class DataclassSecondBeanType:
+    unnamed_bean: Inject[IBean]
+    named_bean: InjectNamed[IBean, "named_bean"]
 
 
 @injectable
@@ -228,6 +235,16 @@ class TestDI:
         second_bean = container.inject(clazz)(42, kwarg="baz")
         assert second_bean.arg == 42
         assert second_bean.kwarg == "baz"
+        assert isinstance(second_bean.unnamed_bean, Bean)
+        assert second_bean.unnamed_bean.foo == "bar_unnamed_bean"
+        assert isinstance(second_bean.named_bean, Bean)
+        assert second_bean.named_bean.foo == "bar_named_bean"
+
+    def test_field_injection_dataclass(self):
+        container = Container()
+        container.register_factory[IBean](lambda: Bean("unnamed_bean"))
+        container.register_factory[IBean](lambda: Bean("named_bean"), bean_name="named_bean")
+        second_bean = container.inject(DataclassSecondBeanType)()
         assert isinstance(second_bean.unnamed_bean, Bean)
         assert second_bean.unnamed_bean.foo == "bar_unnamed_bean"
         assert isinstance(second_bean.named_bean, Bean)
