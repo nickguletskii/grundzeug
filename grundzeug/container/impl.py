@@ -405,7 +405,7 @@ class Container(IContainer):
     ) -> BeanT:
         bean = self.try_resolve_bean(contract=contract, bean_name=bean_name)
         if bean is BEAN_NOT_FOUND:
-            raise ResolutionFailedError()
+            raise ResolutionFailedError(f"Bean not found: contract={contract}, bean_name={bean_name}")
         return bean
 
     @property
