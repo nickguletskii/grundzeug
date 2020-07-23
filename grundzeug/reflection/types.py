@@ -132,7 +132,7 @@ def can_substitute(to_check, type_def, assume_cant_substitute=False) -> bool:
 
     The check is performed by sequentially following the following rules:
 
-    1. If :python:`type_def` is ``NoneType``, return ``True`` iff ``to_check`` is ``NoneType``.
+    1. If ``type_def`` is ``NoneType``, return ``True`` iff ``to_check`` is ``NoneType``.
     2. If ``type_def`` is :py:data:`~typing.Any`, return ``True``.
     3. If ``to_check`` is :py:data:`~typing.Any`, return ``True`` iff ``type_def`` is :py:data:`~typing.Any` or \
        ``Optional[Any]``.
@@ -208,7 +208,7 @@ def is_weak_overload_of(to_check, type_def, assume_cant_substitute=False):
     :param type_def: the type that should be at most as specific as ``to_check`` if this function returns ``True``.
     :param assume_cant_substitute: if ``True``, this function will return ``False`` instead of throwing a \
                                    ``ValueError`` for arguments which can't be compared.
-    :return: ``True`` if ``to_check`` is at least as specific as ``type_def``, ``False`` otherwise.herwise.
+    :return: ``True`` if ``to_check`` is at least as specific as ``type_def``, ``False`` otherwise.
     :raises ValueError: if the arguments are not supported and ``assume_cant_substitute`` is ``False``.
     """
 
