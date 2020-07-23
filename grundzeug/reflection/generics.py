@@ -85,16 +85,16 @@ def specialize_class(specialized_class, process_default_classmethod: bool = True
     """
     Update the class by overriding all fields set to instances of
     :py:class:`~grundzeug.reflection.generics.generic_accessor` and methods decorated with
-    :py:func:`~grundzeug.reflection.generics.generic_classmethod` or ``@classmethod` (if
+    :py:func:`~grundzeug.reflection.generics.generic_classmethod` or ``@classmethod`` (if
     ``process_default_classmethod`` is set to ``True``).
 
     :param specialized_class: The specialized class to update, as returned by \
                               :py:meth:`~typing.Generic.__class_getitem__`.
     :param process_default_classmethod: If set to ``False``, only methods decorated with \
-                                        @:py:func:`~grundzeug.reflection.generics.generic_classmethod` \
+                                        :py:func:`~grundzeug.reflection.generics.generic_classmethod` \
                                         will receive specialized classes as arguments instead of the generic class. If \
                                         set to ``True``, methods decorated with ``@classmethod`` will act like methods \
-                                        annotated with @:py:func:`~grundzeug.reflection.generics.generic_classmethod`.
+                                        annotated with :py:func:`~grundzeug.reflection.generics.generic_classmethod`.
     """
     supplemental_dict = {}
     for name, class_member in specialized_class.__origin__.__dict__.items():
@@ -123,7 +123,7 @@ def _generic_aware_impl(cls: type, process_default_classmethod: bool = True):
 def generic_aware(cls=None, *, process_default_classmethod: bool = True):
     """
     Makes :py:func:`~grundzeug.reflection.generics.generic_accessor` and
-    @:py:func:`~grundzeug.reflection.generics.generic_classmethod` work inside the decorated class.
+    :py:func:`~grundzeug.reflection.generics.generic_classmethod` work inside the decorated class.
 
     If ``process_default_classmethod`` is set to ``True``, methods annotated with ``@classmethod`` are also going to
     receive a specialized class instead of the generic class as an argument.
@@ -132,10 +132,10 @@ def generic_aware(cls=None, *, process_default_classmethod: bool = True):
 
     :param cls: The class to decorate.
     :param process_default_classmethod: If set to ``False``, only methods decorated with \
-                                        @:py:func:`~grundzeug.reflection.generics.generic_classmethod` \
+                                        :py:func:`~grundzeug.reflection.generics.generic_classmethod` \
                                         will receive specialized classes as arguments instead of the generic class. If \
                                         set to ``True``, methods decorated with ``@classmethod`` will act like methods \
-                                        annotated with @:py:func:`~grundzeug.reflection.generics.generic_classmethod`.
+                                        annotated with :py:func:`~grundzeug.reflection.generics.generic_classmethod`.
     """
 
     def wrap(cls):
@@ -152,7 +152,7 @@ _, _generic_class_override_sentinel = make_sentinel()
 class generic_accessor():
     """
     A field descriptor that specifies that this field should contain the value of the specified type variable.
-    The parent class must be @:py:func:`~grundzeug.reflection.generics.generic_aware`.
+    The parent class must be :py:func:`~grundzeug.reflection.generics.generic_aware`.
 
     Usage:
 
