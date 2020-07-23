@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 import pytest
+from typing_extensions import Annotated
 
 from grundzeug.container.di import injectable, inject_value, Inject, InjectNamed
 from grundzeug.container.impl import Container
@@ -293,3 +294,12 @@ class TestDI:
         assert bean_removed == True
         assert plugin_storage_removed == True
         assert container2_removed == True
+
+    def test_shortened_type_annotation(self):
+        def injectable_func(bean: Annotated[IBean, Inject]):
+            return 42
+
+        container = Container()
+        container.register_instance[IBean](Bean("test"))
+        injected_func = container.inject(injectable_func)
+        assert injected_func() == 42

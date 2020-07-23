@@ -17,18 +17,30 @@ from typing import Dict, Any, Generator
 
 from typing_extensions import Annotated
 
-from grundzeug.container.interface import IContainer
+from grundzeug.container.di import Inject
 from grundzeug.container.di.common import InjectAnnotation, TypeIntrospector, register_type_introspector
+from grundzeug.container.interface import IContainer
 
 
 class AnnotatedTypeIntrospector(TypeIntrospector):
     def _process(self, annotated_type: Annotated) -> Generator[InjectAnnotation, None, None]:
-        matching_annotations = [item for item in annotated_type.__metadata__ if isinstance(item, InjectAnnotation)]
+        matching_annotations = [
+            item
+            for item
+            in annotated_type.__metadata__
+            if isinstance(item, InjectAnnotation)
+               or item == Inject
+               or item == InjectAnnotation
+        ]
         if len(matching_annotations) == 0:
             return
 
         if len(matching_annotations) > 1:
             raise Exception("InjectAnnotation has been specified twice.")
+
+        if matching_annotations[0] == Inject or matching_annotations[0] == InjectAnnotation:
+            yield InjectAnnotation(contract=annotated_type.__origin__)
+            return
 
         yield matching_annotations[0]
 
