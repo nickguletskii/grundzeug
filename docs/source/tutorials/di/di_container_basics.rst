@@ -205,7 +205,7 @@ When registering a type or a factory, the default behaviour is to create the bea
     assert id(container.resolve[Contract]()) == id(child_container.resolve[Contract]())
     
 Hierarchical
----------
+------------
 
 Sometimes, it is desirable for descendant containers to have their own bean instances without any additional configuration. The ``Hierarchical`` registration type maintains separate bean instances for each descendant container, instantiating them only after they have been requested.
 
@@ -230,3 +230,22 @@ In some cases, the bean should be instantiated on each request. The ``Transient`
     )
 
     assert id(container.resolve[Contract]()) != id(container.resolve[Contract]())
+
+
+Named beans
+===============
+
+In addition to contracts, there is a secondary mechanism for identifying beans in Grundzeug. You may register multiple
+beans to contracts under different names:
+
+.. code-block:: python
+
+
+    def configure_container(container: IContainer):
+        first_bean = FirstImplementation()
+        second_bean = FirstImplementation()
+        container.register_instance[Contract](first_bean, bean_name="first_bean")
+        container.register_instance[Contract](second_bean, bean_name="second_bean")
+
+        assert id(container.resolve[Contract](bean_name="first_bean")) == id(first_bean)
+        assert id(container.resolve[Contract](bean_name="second_bean")) == id(second_bean)

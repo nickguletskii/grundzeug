@@ -7,3 +7,5 @@ Dependency Injection
     :numbered:
 
     di_container_basics
+    dependency_injection
+    di_container_plugins
