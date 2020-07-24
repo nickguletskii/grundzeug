@@ -41,21 +41,25 @@ def inject(container: IContainer, func):
     if inspect.isclass(func) and hasattr(func, "__injectable__"):
         func = functools.partial(func.__injectable__, container)
     else:
-        sig = inspect.signature(func)
-        to_inject = dictionary_union(
-            *(
-                type_introspector.get_kwargs_to_inject(
-                    func=func,
-                    signature=sig,
-                    container=container
-                )
-                for type_introspector
-                in _type_introspectors
-            )
-        )
-
+        to_inject = get_kwargs_to_inject(container, func)
         func = functools.partial(func, **to_inject)
     return func
 
 
-__all__ = ["injectable", "inject_fields", "inject"]
+def get_kwargs_to_inject(container, func):
+    sig = inspect.signature(func)
+    to_inject = dictionary_union(
+        *(
+            type_introspector.get_kwargs_to_inject(
+                func=func,
+                signature=sig,
+                container=container
+            )
+            for type_introspector
+            in _type_introspectors
+        )
+    )
+    return to_inject
+
+
+__all__ = ["injectable", "inject_fields", "inject", "get_kwargs_to_inject"]

@@ -631,6 +631,29 @@ class Injector:
         """
         raise NotImplementedError()
 
+    @abstractmethod
+    def get_kwargs_to_inject(self, func: FuncT) -> typing.Dict[str, Any]:
+        """
+        Returns the dictionary of kwargs that will be passed into ``func`` on injection.
+
+        If ``func`` is a function, then the following blocks of code should be equivalent:
+
+        .. code-block:: python
+
+            kwargs: typing.Dict[str, Any] = injector.get_kwargs_to_inject(foo)
+            foo(42, **kwargs)
+
+        .. code-block:: python
+
+            injected_foo: Callable[[int], Any] = injector.inject(foo)
+            foo(42)
+
+        :param func: The function to be introspected.
+        :type func: FuncT
+        :return: The injected function.
+        """
+        raise NotImplementedError()
+
 
 @set_module("grundzeug.container")
 class IContainer(Injector):

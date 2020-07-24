@@ -192,6 +192,10 @@ class ContainerInjector(Injector):
         from grundzeug.container.di import inject
         return inject(self.__container, func)
 
+    def get_kwargs_to_inject(self, func: FuncT) -> typing.Dict[str, Any]:
+        from grundzeug.container.di import get_kwargs_to_inject
+        return get_kwargs_to_inject(self.__container, func)
+
 
 @set_module("grundzeug.container")
 class Container(IContainer):
@@ -421,6 +425,10 @@ class Container(IContainer):
     def inject(self, func: FuncT) -> FuncT:
         from grundzeug.container.di import inject
         return inject(self, func)
+
+    def get_kwargs_to_inject(self, func: FuncT) -> typing.Dict[str, Any]:
+        from grundzeug.container.di import get_kwargs_to_inject
+        return get_kwargs_to_inject(self, func)
 
     def get_plugin_storage(self, plugin: ContainerResolutionPlugin):
         if plugin not in self._plugin_storage:
