@@ -213,12 +213,14 @@ class Container(IContainer):
 
         from grundzeug.container.plugins import \
             ContainerBeanListResolutionPlugin, \
-            ContainerSingleValueResolutionPlugin
+            ContainerSingleValueResolutionPlugin, \
+            ContainerSpecialResolutionPlugin
 
         if parent is None:
             self._plugins = [
                 ContainerBeanListResolutionPlugin(),
-                ContainerSingleValueResolutionPlugin()
+                ContainerSingleValueResolutionPlugin(),
+                ContainerSpecialResolutionPlugin()
             ]
         else:
             self._plugins = []

@@ -15,7 +15,7 @@ from typing import Any, Tuple
 
 import pytest
 
-from grundzeug.container import Container, RegistrationKey
+from grundzeug.container import Container, RegistrationKey, Injector
 from grundzeug.container.di import Inject, inject_value
 from grundzeug.container.plugins import BeanList, ContainerBeanListResolutionPlugin
 from grundzeug.container.plugins.ContainerConverterResolutionPlugin import ContainerConverterResolutionPlugin
@@ -62,6 +62,10 @@ injectable_func_parametrize_list = pytest.mark.parametrize(
 
 
 class TestContainerResolutionPlugins:
+
+    def test_injector_resolution(self):
+        container = Container()
+        assert isinstance(container.resolve[Injector](), Injector)
 
     @injectable_func_parametrize_list
     def test_bean_list_injection(self, func):
