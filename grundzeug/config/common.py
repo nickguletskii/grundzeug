@@ -19,6 +19,7 @@ from typing import TypeVar, List, Any, Callable, Type, Optional, Generic, Tuple,
 from grundzeug.container import IContainer
 from grundzeug.container.contracts import register_contract_to_type_converter
 from grundzeug.container.di import InjectAnnotation
+from grundzeug.reflection.types import advanced_isinstance
 from grundzeug.util.sentinels import make_sentinel
 
 ConfigT = TypeVar("ConfigT")
@@ -98,7 +99,7 @@ class _ConfigurableMetadata():
                 clazz = clazz.__grundzeug_configuration__.original_class
 
             def _assert_isinstance(value):
-                if not isinstance(value, clazz):
+                if not advanced_isinstance(value, clazz):
                     message = f"The Configurable specifies that the value should be an instance of {clazz}, but it's" \
                               f"an instance of {type(value)}."
                     raise ConfigurationValidationException(message, TypeError(message))

@@ -75,7 +75,7 @@ def extract_callable_parameters_and_return_type(callable) -> typing.Tuple[typing
     is_function = isinstance(callable, type(_check_callable_signature))
     signature: inspect.Signature = inspect.signature(callable if is_function else callable.__call__)
     params = [x.annotation for x in signature.parameters.values()]
-    if not is_function:
+    if not is_function and can_substitute(type(callable), type):
         # If callable is an object, the first argument is self
         params = params[1:]
     return tuple(params), signature.return_annotation
@@ -324,5 +324,51 @@ def _check_tuple_args_compatibility(
            and all(can_substitute(x, y) for x, y in zip(args_def, args_to_check))
 
 
+def advanced_isinstance(instance, type_def) -> bool:
+    """
+    An improved version of python's ``isinstance`` that takes care of unions, tuples, generic type definitions and other
+    types that can be handled using :py:func:`~grundzeug.reflection.types.can_substitute`.
+
+    1. If ``type_def`` is a union, checks if ``instance`` is an ``advanced_isinstance`` of any element of the union.
+    2. If ``type_def`` is a tuple definition, checks if ``instance`` is a tuple that matches the signature specified \
+       in ``type_def``.
+    3. If ``type_def`` is a callable, checks if ``instance`` is a callable with a signature that satisfies the \
+       constraint.
+    4. If ``type_def`` is a generic class definition and the type of ``instance`` can substitute ``type_def`` \
+       according to :py:func:`~grundzeug.reflection.types.can_substitute`, return ``True``.
+    5. If ``type_def`` is a generic class definition and any base class of ``instance`` can substitute ``type_def`` \
+       according to :py:func:`~grundzeug.reflection.types.can_substitute`, return ``True``.
+    6. Otherwise, if ``type_def`` is a generic class definition, return ``False``.
+
+    For all other types, ``can_substitute(type(instance), type_def)`` is returned.
+
+    :param instance: The instance to check against ``type_def``.
+    :param type_def: The type definition that should include ``instance`` if this function returns ``True``.
+    :return: ``True`` if ``instance`` satisfies the type constraint ``type_def``, ``False`` otherwise.
+    """
+    if isinstance(type_def, _GenericAlias):
+        if type_def.__origin__ == typing.Union:
+            # Handles both Union and Optional
+            return any(advanced_isinstance(instance, x) for x in type_def.__args__)
+        elif type_def.__origin__ == tuple:
+            args_def = type_def.__args__
+            if not can_substitute(type(instance), tuple):
+                return False
+            return _check_tuple_args_compatibility(tuple(type(x) for x in instance), args_def)
+        elif type_def.__origin__ == typing.Callable or type_def.__origin__ == collections.abc.Callable:
+            return _check_callable_signature(instance, type_def, False)
+        else:
+            if can_substitute(type(instance), type_def):
+                return True
+            # When a class inherits a generic class, its type information is erased for some reason.
+            # TODO: Check what can be done about this. Maybe @generic_aware classes should be handled differently?
+            for base in type(instance).__bases__:
+                if can_substitute(base, type_def.__origin__):
+                    return True
+            return False
+
+    return can_substitute(type(instance), type_def)
+
+
 __all__ = ["is_generic_alias_of", "is_none_type", "is_any_type", "extract_callable_parameters_and_return_type",
-           "is_callable", "can_substitute", "is_weak_overload_of"]
+           "is_callable", "can_substitute", "is_weak_overload_of", "advanced_isinstance"]

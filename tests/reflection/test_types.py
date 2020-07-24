@@ -12,9 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import typing
-from typing import Union, Tuple, Optional, Any
+from typing import Tuple, Optional, Any
 
-from grundzeug.reflection.types import can_substitute, is_weak_overload_of
+from grundzeug.reflection.types import can_substitute, is_weak_overload_of, advanced_isinstance
 
 
 class BaseClass1:
@@ -51,6 +51,7 @@ class CallableClass:
 
 
 class TestTypes:
+
     def test_can_substitute_to_any(self):
         assert can_substitute(str, Any)
         assert can_substitute(type, Any)
@@ -161,4 +162,115 @@ class TestTypes:
         assert not is_weak_overload_of(
             typing.Callable[[BaseClass1], DerivedClass2],
             typing.Callable[[DerivedClass1], BaseClass2],
+        )
+
+    def test_advanced_isinstance_to_any(self):
+        assert advanced_isinstance("", Any)
+        assert advanced_isinstance(str, Any)
+        assert advanced_isinstance(None, Any)
+        assert advanced_isinstance((DerivedClass1(), DerivedClass2()), Any)
+
+    def test_advanced_isinstance_to_none_optional(self):
+        assert advanced_isinstance(None, Optional[str])
+        assert advanced_isinstance("", Optional[str])
+
+    def test_advanced_isinstance_to_tuples(self):
+        assert advanced_isinstance((DerivedClass1(),), Tuple[BaseClass1])
+        assert advanced_isinstance((DerivedClass1(),), tuple)
+        assert advanced_isinstance((DerivedClass1(), DerivedClass2()), Tuple[BaseClass1, BaseClass2])
+        assert advanced_isinstance((DerivedClass1(), BaseClass2()), Tuple[BaseClass1, BaseClass2])
+        assert not advanced_isinstance((BaseClass1(), BaseClass2()), Tuple[DerivedClass1, DerivedClass2])
+        assert not advanced_isinstance((BaseClass1(), BaseClass2()), Tuple[DerivedClass1, BaseClass2])
+
+    def test_advanced_isinstance_to_generic_class(self):
+        assert advanced_isinstance(GenericClass[int](), GenericClass[T1])
+        assert advanced_isinstance(GenericClass[int](), GenericClass)
+        assert not advanced_isinstance(GenericClass(), GenericClass[int])
+        assert not advanced_isinstance(GenericClass[str](), GenericClass[int])
+
+    def test_advanced_isinstance_to_generic_subclass(self):
+        print(type(DerivedGenericClass[str, int]()).__bases__)
+        assert advanced_isinstance(DerivedGenericClass[str, int](), GenericClass[int])
+        # Python erases type information by default.
+        # TODO: Handle @generic_aware classes.
+        assert advanced_isinstance(DerivedGenericClass[int, str](), GenericClass[int])
+
+    def test_advanced_isinstance_to_generic_class_bound(self):
+        TB = typing.TypeVar("TB", bound=BaseClass1)
+
+        class GenericClassBound(typing.Generic[TB]):
+            pass
+
+        assert advanced_isinstance(GenericClassBound[DerivedClass1](), GenericClassBound[TB])
+        assert advanced_isinstance(GenericClassBound[DerivedClass1](), GenericClassBound)
+
+    def test_advanced_isinstance_to_generic_class_constraint(self):
+        TC = typing.TypeVar("TC", BaseClass1, int)
+
+        class GenericClassConstraint(typing.Generic[TC]):
+            pass
+
+        assert advanced_isinstance(GenericClassConstraint[BaseClass1](), GenericClassConstraint[TC])
+        # Different from can_substitute due to type erasure!
+        assert advanced_isinstance(GenericClassConstraint[DerivedClass1](), GenericClassConstraint[TC])
+        assert not advanced_isinstance(GenericClassConstraint[TC](), GenericClassConstraint[DerivedClass1])
+        assert advanced_isinstance(GenericClassConstraint[BaseClass1](), GenericClassConstraint)
+        # Different from can_substitute due to type erasure!
+        assert advanced_isinstance(GenericClassConstraint[DerivedClass1](), GenericClassConstraint)
+        assert not advanced_isinstance(GenericClassConstraint(), GenericClassConstraint[DerivedClass1])
+
+    def test_advanced_isinstance_to_optional(self):
+        assert advanced_isinstance(DerivedClass1(), Optional[DerivedClass1])
+        assert advanced_isinstance(DerivedClass1(), Optional[BaseClass1])
+
+    def test_advanced_isinstance_to_callable_class(self):
+        assert advanced_isinstance(CallableClass(), typing.Callable[[str, float], int])
+
+    def test_advanced_isinstance_to_callable_callable(self):
+        def _fun1(arg: BaseClass1) -> BaseClass2:
+            raise NotImplementedError()
+
+        assert advanced_isinstance(
+            _fun1,
+            typing.Callable[[DerivedClass1], BaseClass2]
+        )
+
+        def _fun2(arg: DerivedClass1) -> BaseClass2:
+            raise NotImplementedError()
+
+        assert not advanced_isinstance(
+            _fun2,
+            typing.Callable[[BaseClass1], BaseClass2]
+        )
+
+        def _fun3(arg: BaseClass1) -> DerivedClass2:
+            raise NotImplementedError()
+
+        assert advanced_isinstance(
+            _fun3,
+            typing.Callable[[BaseClass1], BaseClass2]
+        )
+
+        def _fun3(arg: BaseClass1) -> BaseClass2:
+            raise NotImplementedError()
+
+        assert not advanced_isinstance(
+            _fun3,
+            typing.Callable[[BaseClass1], DerivedClass2]
+        )
+
+        def _fun4(arg: BaseClass1) -> DerivedClass2:
+            raise NotImplementedError()
+
+        assert advanced_isinstance(
+            _fun4,
+            typing.Callable[[DerivedClass1], BaseClass2]
+        )
+
+        def _fun5(arg: DerivedClass1) -> BaseClass2:
+            raise NotImplementedError()
+
+        assert not advanced_isinstance(
+            _fun5,
+            typing.Callable[[BaseClass1], DerivedClass2]
         )
