@@ -20,7 +20,7 @@ steps:
       - "/usr/local/lib/python3.7/site-packages"
   volumes:
   - name: cache
-    path: /tmp/drone-cache
+    path: /tmp/cache
 - name: test
   pull: always
   image: python:3.7
@@ -39,7 +39,7 @@ steps:
       - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
-      path: /tmp/drone-cache
+      path: /tmp/cache
 
 trigger:
   ref:
@@ -69,7 +69,7 @@ steps:
       - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
-      path: /tmp/drone-cache
+      path: /tmp/cache
 - name: test
   pull: always
   image: python:3.8
@@ -88,7 +88,7 @@ steps:
       - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
-      path: /tmp/drone-cache
+      path: /tmp/cache
 
 trigger:
   ref:
@@ -118,7 +118,7 @@ steps:
       - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
-      path: /tmp/drone-cache
+      path: /tmp/cache
 - name: build
   pull: always
   image: python:3.8
@@ -147,7 +147,7 @@ steps:
       - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
-      path: /tmp/drone-cache
+      path: /tmp/cache
 
 trigger:
   ref:
