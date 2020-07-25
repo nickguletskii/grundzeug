@@ -34,7 +34,6 @@ steps:
 - name: restore-cache
   image: meltwater/drone-cache
   environment:
-    S3_ENDPOINT: https://minio.centos2.nickguletskii.com
     CACHE_AWS_ACCESS_KEY_ID: drone_cache2
     CACHE_AWS_SECRET_ACCESS_KEY:
       from_secret: MINIO_SECRET_KEY_DRONE_CACHE
@@ -42,7 +41,10 @@ steps:
   settings:
     restore: true
     cache_key: python38_{{ checksum "dev-requirements.txt" }}
-    bucket: drone-cache-bucket
+    bucket: drone-cache
+    region: eu-west-1
+    path_style: true
+    endpoint: minio.centos2.nickguletskii.com
     mount:
       - '/root/.cache/pip'
 - name: test
@@ -55,14 +57,16 @@ steps:
   image: meltwater/drone-cache
   pull: true
   environment:
-    S3_ENDPOINT: https://minio.centos2.nickguletskii.com
     CACHE_AWS_ACCESS_KEY_ID: drone_cache
     CACHE_AWS_SECRET_ACCESS_KEY:
       from_secret: MINIO_SECRET_KEY_DRONE_CACHE
   settings:
     rebuild: true
     cache_key: python38_{{ checksum "dev-requirements.txt" }}
-    bucket: drone-cache-bucket
+    bucket: drone-cache
+    region: eu-west-1
+    path_style: true
+    endpoint: minio.centos2.nickguletskii.com
     mount:
       - '/root/.cache/pip'
 trigger:
