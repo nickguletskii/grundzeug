@@ -91,11 +91,13 @@ steps:
   commands:
   - pip3 install --no-cache-dir --upgrade wheel twine
   - python3.7 setup.py bdist_wheel
-  - twine upload --non-interactive --repository-url https://upload.pypi.org/legacy/ dist/*
-  environment:
-    TWINE_PASSWORD:
+
+- name: pypi_publish
+  image: plugins/pypi
+  settings:
+    password:
       from_secret: TWINE_PASSWORD
-    TWINE_USERNAME:
+    username:
       from_secret: TWINE_USERNAME
 
 trigger:
