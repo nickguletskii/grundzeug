@@ -8,20 +8,18 @@ platform:
   arch: amd64
 
 steps:
-  - name: test
-    pull: always
-    image: python:3.7
-    commands:
-      - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-      - pytest --cov=grundzeug tests
+- name: test
+  pull: always
+  image: python:3.7
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - pytest --cov=grundzeug tests
 
 trigger:
-  branch:
-    - master
-  event:
-    - pull_request
   ref:
-    - refs/tags/v*
+  - refs/heads/master
+  - refs/pull/*/head
+  - refs/tags/v*
 
 ---
 kind: pipeline
@@ -33,21 +31,18 @@ platform:
   arch: amd64
 
 steps:
-  - name: test
-    pull: always
-    image: python:3.8
-    commands:
-      - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-      - pytest --cov=grundzeug tests
+- name: test
+  pull: always
+  image: python:3.8
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - pytest --cov=grundzeug tests
 
 trigger:
-  branch:
-    - master
-  event:
-    - pull_request
   ref:
-    - refs/tags/v*
-
+  - refs/heads/master
+  - refs/pull/*/head
+  - refs/tags/v*
 
 ---
 kind: pipeline
@@ -59,26 +54,26 @@ platform:
   arch: amd64
 
 steps:
-  - name: build
-    pull: always
-    image: python:3.8
-    commands:
-      - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-      - cd docs
-      - make html
-  - name: deploy
-    pull: always
-    image: minio/mc:latest
-    commands:
-      - mc mirror --debug --overwrite docs/build/html/ site/grundzeug-root/docs/
-    environment:
-      MC_HOST_site:
-        from_secret: MC_HOST_site
+- name: build
+  pull: always
+  image: python:3.8
+  commands:
+  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - cd docs
+  - make html
+
+- name: deploy
+  pull: always
+  image: minio/mc:latest
+  commands:
+  - mc mirror --debug --overwrite docs/build/html/ site/grundzeug-root/docs/
+  environment:
+    MC_HOST_site:
+      from_secret: MC_HOST_site
 
 trigger:
   ref:
-    - refs/tags/v*
-
+  - refs/tags/v*
 
 ---
 kind: pipeline
@@ -90,23 +85,24 @@ platform:
   arch: amd64
 
 steps:
-  - name: build_and_deploy
-    pull: always
-    image: python:3.7
-    commands:
-      - pip install --upgrade wheel twine
-      - python3.7 setup.py bdist_wheel
-      - twine upload dist/*
-    environment:
-      TWINE_USERNAME:
-        from_secret: TWINE_USERNAME
-      TWINE_PASSWORD:
-        from_secret: TWINE_PASSWORD
-
-depends_on:
-  - testing-python-3.7
-  - testing-python-3.8
+- name: build_and_deploy
+  pull: always
+  image: python:3.7
+  commands:
+  - pip install --upgrade wheel twine
+  - python3.7 setup.py bdist_wheel
+  - twine upload dist/*
+  environment:
+    TWINE_PASSWORD:
+      from_secret: TWINE_PASSWORD
+    TWINE_USERNAME:
+      from_secret: TWINE_USERNAME
 
 trigger:
   ref:
-    - refs/tags/v*
+  - refs/tags/v*
+
+depends_on:
+- testing-python-3.7
+- testing-python-3.8
+
