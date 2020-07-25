@@ -1,0 +1,52 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy_docs:
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+    - name: Build documentation
+      run: |
+        python -m pip install --upgrade pip
+        pip3 install --upgrade -r dev-requirements.txt
+        pushd docs
+        make html
+        popd
+    - name: Upload documenmtation
+      run: |
+        wget --quiet -c --output-document mc https://dl.min.io/client/mc/release/linux-amd64/mc
+        ./mc mirror --debug --overwrite docs/build/html/ site/grundzeug-root/docs/
+      env:
+        MC_HOST_site: ${{ secrets.MC_HOST_site }}
+        
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
