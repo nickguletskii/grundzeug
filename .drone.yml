@@ -31,13 +31,40 @@ platform:
   arch: amd64
 
 steps:
+- name: restore-cache
+  image: meltwater/drone-cache
+  environment:
+    S3_ENDPOINT: https://minio.centos2.nickguletskii.com
+    CACHE_AWS_ACCESS_KEY_ID: drone_cache2
+    CACHE_AWS_SECRET_ACCESS_KEY:
+      from_secret: MINIO_SECRET_KEY_DRONE_CACHE
+  pull: true
+  settings:
+    restore: true
+    cache_key: python38_{{ checksum "dev-requirements.txt" }}
+    bucket: drone-cache-bucket
+    mount:
+      - '/root/.cache/pip'
 - name: test
   pull: always
   image: python:3.8
   commands:
-  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+  - pip3 install --upgrade -r dev-requirements.txt
   - pytest --cov=grundzeug tests
-
+- name: rebuild-cache
+  image: meltwater/drone-cache
+  pull: true
+  environment:
+    S3_ENDPOINT: https://minio.centos2.nickguletskii.com
+    CACHE_AWS_ACCESS_KEY_ID: drone_cache
+    CACHE_AWS_SECRET_ACCESS_KEY:
+      from_secret: MINIO_SECRET_KEY_DRONE_CACHE
+  settings:
+    rebuild: true
+    cache_key: python38_{{ checksum "dev-requirements.txt" }}
+    bucket: drone-cache-bucket
+    mount:
+      - '/root/.cache/pip'
 trigger:
   ref:
   - refs/heads/master
