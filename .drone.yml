@@ -90,6 +90,10 @@ steps:
   image: python:3.7
   commands:
   - pip3 install --no-cache-dir --upgrade wheel twine
+  - git status
+  - git describe --dirty --tags --long
+  - git describe --dirty --tags
+  - git describe --tags
   - python3.7 setup.py bdist_wheel
 
 - name: pypi_publish
