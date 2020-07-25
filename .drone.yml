@@ -1,113 +1,112 @@
 ---
 kind: pipeline
 type: docker
-name: master/testing-python-3.7
+name: testing-python-3.7
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-- name: test
-  pull: always
-  image: python:3.7
-  commands:
-  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-  - pytest --cov=grundzeug tests
+  - name: test
+    pull: always
+    image: python:3.7
+    commands:
+      - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+      - pytest --cov=grundzeug tests
 
 trigger:
   branch:
-  - master
-
----
-kind: pipeline
-type: docker
-name: pull_request/testing-python-3.7
-
-platform:
-  os: linux
-  arch: amd64
-
-steps:
-- name: test
-  pull: always
-  image: python:3.7
-  commands:
-  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-  - pytest --cov=grundzeug tests
-
-trigger:
+    - master
   event:
-  - pull_request
+    - pull_request
+  ref:
+    - refs/tags/v*
 
 ---
 kind: pipeline
 type: docker
-name: master/testing-python-3.8
+name: testing-python-3.8
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-- name: test
-  pull: always
-  image: python:3.8
-  commands:
-  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-  - pytest --cov=grundzeug tests
+  - name: test
+    pull: always
+    image: python:3.8
+    commands:
+      - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+      - pytest --cov=grundzeug tests
 
 trigger:
   branch:
-  - master
-
----
-kind: pipeline
-type: docker
-name: pull_request/testing-python-3.8
-
-platform:
-  os: linux
-  arch: amd64
-
-steps:
-- name: test
-  pull: always
-  image: python:3.8
-  commands:
-  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-  - pytest --cov=grundzeug tests
-
-trigger:
+    - master
   event:
-  - pull_request
+    - pull_request
+  ref:
+    - refs/tags/v*
+
 
 ---
 kind: pipeline
 type: docker
-name: master/docs
+name: tag/docs
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-- name: build
-  pull: always
-  image: python:3.8
-  commands:
-  - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
-  - cd docs
-  - make html
-- name: deploy
-  pull: always
-  image: minio/mc:latest
-  commands:
-  - mc mirror --debug --overwrite docs/build/html/ site/grundzeug-root/docs/
-  environment:
-    MC_HOST_site:
-      from_secret: MC_HOST_site
+  - name: build
+    pull: always
+    image: python:3.8
+    commands:
+      - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
+      - cd docs
+      - make html
+  - name: deploy
+    pull: always
+    image: minio/mc:latest
+    commands:
+      - mc mirror --debug --overwrite docs/build/html/ site/grundzeug-root/docs/
+    environment:
+      MC_HOST_site:
+        from_secret: MC_HOST_site
 
 trigger:
-  branch:
-  - master
+  ref:
+    - refs/tags/v*
+
+
+---
+kind: pipeline
+type: docker
+name: tag/publish
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: build_and_deploy
+    pull: always
+    image: python:3.7
+    commands:
+      - pip install --upgrade wheel twine
+      - python3.7 setup.py bdist_wheel
+      - twine upload dist/*
+    environment:
+      TWINE_USERNAME:
+        from_secret: TWINE_USERNAME
+      TWINE_PASSWORD:
+        from_secret: TWINE_PASSWORD
+
+depends_on:
+  - testing-python-3.7
+  - testing-python-3.8
+
+trigger:
+  ref:
+    - refs/tags/v*
