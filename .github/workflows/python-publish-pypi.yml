@@ -25,6 +25,7 @@ jobs:
     - name: Upload documenmtation
       run: |
         wget --quiet -c --output-document mc https://dl.min.io/client/mc/release/linux-amd64/mc
+        chmod +x ./mc
         ./mc mirror --debug --overwrite docs/build/html/ site/grundzeug-root/docs/
       env:
         MC_HOST_site: ${{ secrets.MC_HOST_site }}
