@@ -8,12 +8,38 @@ platform:
   arch: amd64
 
 steps:
+- name: restore-cache-with-filesystem
+  image: meltwater/drone-cache:dev
+  pull: true
+  settings:
+    backend: "filesystem"
+    restore: true
+    cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python37'
+    archive_format: "gzip"
+    mount:
+      - "/usr/local/lib/python3.7/site-packages"
+  volumes:
+  - name: cache
+    path: /tmp/drone-cache
 - name: test
   pull: always
   image: python:3.7
   commands:
   - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
   - pytest --cov=grundzeug tests
+- name: rebuild-cache-with-filesystem
+  image: meltwater/drone-cache:dev
+  pull: true
+  settings:
+    backend: "filesystem"
+    rebuild: true
+    cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python37'
+    archive_format: "gzip"
+      mount:
+        - "/usr/local/lib/python3.7/site-packages"
+  volumes:
+    - name: cache
+      path: /tmp/drone-cache
 
 trigger:
   ref:
@@ -31,12 +57,38 @@ platform:
   arch: amd64
 
 steps:
+- name: restore-cache-with-filesystem
+  image: meltwater/drone-cache:dev
+  pull: true
+  settings:
+    backend: "filesystem"
+    restore: true
+    cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python38'
+    archive_format: "gzip"
+    mount:
+      - "/usr/local/lib/python3.7/site-packages"
+  volumes:
+    - name: cache
+      path: /tmp/drone-cache
 - name: test
   pull: always
   image: python:3.8
   commands:
   - pip3 install --no-cache-dir --upgrade -r dev-requirements.txt
   - pytest --cov=grundzeug tests
+- name: rebuild-cache-with-filesystem
+  image: meltwater/drone-cache:dev
+  pull: true
+  settings:
+    backend: "filesystem"
+    rebuild: true
+    cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python38'
+    archive_format: "gzip"
+      mount:
+        - "/usr/local/lib/python3.7/site-packages"
+  volumes:
+    - name: cache
+      path: /tmp/drone-cache
 
 trigger:
   ref:
@@ -54,6 +106,19 @@ platform:
   arch: amd64
 
 steps:
+- name: restore-cache-with-filesystem
+  image: meltwater/drone-cache:dev
+  pull: true
+  settings:
+    backend: "filesystem"
+    restore: true
+    cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python38'
+    archive_format: "gzip"
+    mount:
+      - "/usr/local/lib/python3.7/site-packages"
+  volumes:
+    - name: cache
+      path: /tmp/drone-cache
 - name: build
   pull: always
   image: python:3.8
@@ -70,6 +135,19 @@ steps:
   environment:
     MC_HOST_site:
       from_secret: MC_HOST_site
+- name: rebuild-cache-with-filesystem
+  image: meltwater/drone-cache:dev
+  pull: true
+  settings:
+    backend: "filesystem"
+    rebuild: true
+    cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python38'
+    archive_format: "gzip"
+      mount:
+        - "/usr/local/lib/python3.7/site-packages"
+  volumes:
+    - name: cache
+      path: /tmp/drone-cache
 
 trigger:
   ref:
@@ -91,7 +169,7 @@ steps:
   commands:
   - pip install --upgrade wheel twine
   - python3.7 setup.py bdist_wheel
-  - twine upload dist/*
+  - twine upload --non-interactive --repository-url https://upload.pypi.org/legacy/ dist/*
   environment:
     TWINE_PASSWORD:
       from_secret: TWINE_PASSWORD
