@@ -35,8 +35,8 @@ steps:
     rebuild: true
     cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python37'
     archive_format: "gzip"
-      mount:
-        - "/usr/local/lib/python3.7/site-packages"
+    mount:
+      - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
       path: /tmp/drone-cache
@@ -84,8 +84,8 @@ steps:
     rebuild: true
     cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python38'
     archive_format: "gzip"
-      mount:
-        - "/usr/local/lib/python3.7/site-packages"
+    mount:
+      - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
       path: /tmp/drone-cache
@@ -143,8 +143,8 @@ steps:
     rebuild: true
     cache_key: '{{ .Repo.Name }}_{{ checksum "dev-requirements.txt" }}_python38'
     archive_format: "gzip"
-      mount:
-        - "/usr/local/lib/python3.7/site-packages"
+    mount:
+      - "/usr/local/lib/python3.7/site-packages"
   volumes:
     - name: cache
       path: /tmp/drone-cache
