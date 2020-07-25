@@ -100,6 +100,19 @@ injectable_func_parametrize = pytest.mark.parametrize(
 
 class TestDI:
     @injectable_func_parametrize
+    def test_func_get_kwargs_to_inject(self, func):
+        container = Container()
+        bean1 = Bean("unnamed_bean")
+        bean2 = Bean("named_bean")
+        container.register_instance[IBean](bean1)
+        container.register_instance[IBean](bean2, bean_name="named_bean")
+        kwargs = container.get_kwargs_to_inject(func)
+        assert kwargs == {
+            "bean": bean1,
+            "named_bean": bean2
+        }
+
+    @injectable_func_parametrize
     def test_func_instance_injection(self, func):
         container = Container()
         bean = Bean("unnamed_bean")
