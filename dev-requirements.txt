@@ -44,7 +44,7 @@ pep562==1.0
 pluggy==0.13.0
 port-for==0.3.1
 portray==1.3.1
-py==1.8.0
+py==1.10.0
 Pygments==2.4.2
 pylint==2.4.3
 pymdown-extensions==6.1
